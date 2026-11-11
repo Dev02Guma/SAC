@@ -547,9 +547,11 @@ body.sac .choices__list--dropdown .choices__placeholder { display: none; }
 body.sac .choices__list--dropdown .has-no-results, body.sac .choices__list--dropdown .has-no-choices { color: var(--sac-muted); }
 
 /* ---------- Pedidos ---------- */
+.sac-range2 { display: flex; align-items: center; gap: 6px; }
+.sac-range2-sep { color: var(--sac-muted); font-weight: 600; }
 .sac-range { position: relative; }
 .sac-range > svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--sac-ink-2); pointer-events: none; z-index: 1; }
-body.sac .sac-range .form-control { min-height: 40px; width: 210px; padding-left: 40px; font-weight: 600; font-size: 14px; color: var(--sac-ink); cursor: pointer; background: var(--sac-surface); }
+body.sac .sac-range .form-control { min-height: 40px; width: 150px; padding-left: 40px; font-weight: 600; font-size: 14px; color: var(--sac-ink); cursor: pointer; background: var(--sac-surface); }
 body.sac table.sac-ped-tbl { table-layout: fixed; }
 body.sac .sac-wrap > * { min-width: 0; }
 body.sac table.sac-ped-tbl > tbody > tr > td { padding: 0 !important; border-bottom: 1px solid var(--sac-border-soft); }
@@ -998,7 +1000,8 @@ html[data-sac-theme="dark"] body.sac .border-end, html[data-sac-theme="dark"] bo
 html[data-sac-theme="dark"] body.sac .text-dark, html[data-sac-theme="dark"] body.sac .text-black { color: var(--sac-ink) !important; }
 html[data-sac-theme="dark"] body.sac .form-control, html[data-sac-theme="dark"] body.sac .form-select,
 html[data-sac-theme="dark"] body.sac .input-group-text { background-color: var(--sac-surface); color: var(--sac-ink); border-color: var(--sac-input-border); }
-html[data-sac-theme="dark"] body.sac .form-control:disabled, html[data-sac-theme="dark"] body.sac .form-control[readonly]:not(#sacPedRango) { background-color: var(--sac-surface-2); }
+html[data-sac-theme="dark"] body.sac .form-control:disabled, html[data-sac-theme="dark"] body.sac .form-control[readonly] { background-color: var(--sac-surface-2); }
+html[data-sac-theme="dark"] body.sac .sac-range .form-control { background-color: var(--sac-surface); }
 html[data-sac-theme="dark"] body.sac .form-select { background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23A3AEC4' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e"); }
 html[data-sac-theme="dark"] body.sac .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
 html[data-sac-theme="dark"] body.sac .btn-falcon-default, html[data-sac-theme="dark"] body.sac .btn-light,

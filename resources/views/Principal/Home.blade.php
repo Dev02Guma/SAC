@@ -243,34 +243,41 @@
   });
 </script>
 <script>
-  // ===== Pedidos: selector de rango (dos fechas) y SAC =====
+  // ===== Pedidos: dos calendarios (Desde / Hasta) y SAC =====
   (function () {
-    var vis = document.getElementById('sacPedRango'), oculto = document.getElementById('id_range_select');
-    if (!vis || !window.flatpickr) return;
+    var desde = document.getElementById('sacPedDesde'), hasta = document.getElementById('sacPedHasta'), oculto = document.getElementById('id_range_select');
+    if (!desde || !hasta || !window.flatpickr) return;
     var M = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
     var ES = {
       weekdays: { shorthand: ['Do','Lu','Ma','Mi','Ju','Vi','Sá'], longhand: ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] },
       months: { shorthand: M, longhand: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] },
-      firstDayOfWeek: 1, rangeSeparator: ' – ', ordinal: function () { return ''; }
+      firstDayOfWeek: 1, ordinal: function () { return ''; }
     };
-    function etiqueta(d) {
-      if (!d || !d.length) return 'Elige un rango';
-      var a = d[0], b = d[1] || d[0];
-      if (a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth())
-        return (a.getDate() === b.getDate() ? '' : a.getDate() + ' – ') + b.getDate() + ' ' + M[b.getMonth()] + ' ' + b.getFullYear();
-      return a.getDate() + ' ' + M[a.getMonth()] + (a.getFullYear() !== b.getFullYear() ? ' ' + a.getFullYear() : '') + ' – ' + b.getDate() + ' ' + M[b.getMonth()] + ' ' + b.getFullYear();
-    }
+    // Valor inicial que deja js_home en el campo oculto: "AAAA-MM-DD to AAAA-MM-DD"
     var ini = (oculto.value || '').split('to').map(function (x) { return $.trim(x); }).filter(Boolean);
-    var fp = flatpickr(vis, {
-      mode: 'range', dateFormat: 'Y-m-d', locale: ES, defaultDate: ini, disableMobile: true, position: 'auto right',
-      onReady: function (d, s, inst) { inst.input.value = etiqueta(d); },
-      onValueUpdate: function (d, s, inst) { inst.input.value = etiqueta(d); },
-      onClose: function (d, s, inst) {
-        if (d.length < 2) { if (ini.length) inst.setDate(ini, false); inst.input.value = etiqueta(inst.selectedDates); return; }
-        var v = inst.formatDate(d[0], 'Y-m-d') + ' to ' + inst.formatDate(d[1], 'Y-m-d');
-        if (v !== oculto.value) { oculto.value = v; ini = [inst.formatDate(d[0], 'Y-m-d'), inst.formatDate(d[1], 'Y-m-d')]; $(oculto).trigger('change'); }
+    var fpDesde, fpHasta;
+    function consultar() {
+      var a = fpDesde.selectedDates[0], b = fpHasta.selectedDates[0];
+      if (!a || !b) return;
+      var v = flatpickr.formatDate(a, 'Y-m-d') + ' to ' + flatpickr.formatDate(b, 'Y-m-d');
+      if (v !== oculto.value) { oculto.value = v; $(oculto).trigger('change'); }
+    }
+    var base = { dateFormat: 'Y-m-d', altInput: true, altFormat: 'j M Y', altInputClass: 'form-control', locale: ES, disableMobile: true };
+    fpDesde = flatpickr(desde, $.extend({}, base, {
+      defaultDate: ini[0] || null, maxDate: ini[1] || null,
+      onChange: function (d) {
+        if (fpHasta) {
+          fpHasta.set('minDate', d[0] || null);
+          // Si la fecha final quedó antes de la inicial, se iguala
+          if (d[0] && fpHasta.selectedDates[0] && fpHasta.selectedDates[0] < d[0]) fpHasta.setDate(d[0], false);
+        }
+        consultar();
       }
-    });
+    }));
+    fpHasta = flatpickr(hasta, $.extend({}, base, {
+      defaultDate: ini[1] || ini[0] || null, minDate: ini[0] || null, position: 'auto right',
+      onChange: function (d) { fpDesde.set('maxDate', d[0] || null); consultar(); }
+    }));
     $('#id_select_sac').on('change', function () { $(oculto).trigger('change'); });
   })();
 </script>
@@ -302,10 +309,18 @@
                 <div class="d-flex align-items-center gap-2 flex-wrap">
                   <div id="id_loading" class="spinner-border spinner-border-sm text-primary" role="status"><span class="visually-hidden">Cargando…</span></div>
                   <button type="button" class="btn btn-falcon-default" id="sacPedExport" data-sac-only="pedidos"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><path d="m7 10 5 5 5-5M12 15V3"></path></svg> Exportar</button>
-                  <div class="sac-range" data-sac-only="pedidos">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
-                    <label class="visually-hidden" for="sacPedRango">Rango de fechas de los pedidos</label>
-                    <input type="text" class="form-control" id="sacPedRango" readonly>
+                  <div class="sac-range2" data-sac-only="pedidos" role="group" aria-label="Rango de fechas de los pedidos">
+                    <div class="sac-range">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                      <label class="visually-hidden" for="sacPedDesde">Desde</label>
+                      <input type="text" class="form-control" id="sacPedDesde" placeholder="Desde" readonly>
+                    </div>
+                    <span class="sac-range2-sep" aria-hidden="true">–</span>
+                    <div class="sac-range">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                      <label class="visually-hidden" for="sacPedHasta">Hasta</label>
+                      <input type="text" class="form-control" id="sacPedHasta" placeholder="Hasta" readonly>
+                    </div>
                     <input type="hidden" id="id_range_select">
                   </div>
                   @if (Session::get('rol') == '1' || Session::get('rol') == '2')
