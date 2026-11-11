@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Usuarios')
 @section('metodosjs')
 @include('jsViews.js_usuario')
 @endsection
@@ -11,6 +12,12 @@
     <div class="container-fluid" data-layout="container">
         <div class="content">
             @include('layouts.nav_importacion')
+            <div class="sac-head" style="margin-bottom: 20px">
+              <div>
+                <h1 class="sac-h1">Usuarios</h1>
+                <p class="sac-sub">Roles y rutas asignadas</p>
+              </div>
+            </div>
 
             <div class="col-xxl-12">
               <div class="card h-100">

@@ -13,7 +13,7 @@ class Promocion extends Model
     public function getImageUrlAttribute(){
 
         if(!is_null($this->image)){
-            return Storage::temporaryUrl('Promociones/'.$this->image, now()->addMinutes(5));
+            return Storage::temporaryUrl('Promociones/'.$this->image, now()->addHours(12));
         }
         return null;
     }
@@ -35,7 +35,7 @@ class Promocion extends Model
             $array[$i]['image'] = $row->image;
             $array[$i]['activo'] = $row->activo;
             if(!is_null($row->image)){
-                $array[$i]['image_url'] = Storage::temporaryUrl('Promociones/'.$row->image, now()->addMinutes(5));
+                $array[$i]['image_url'] = Storage::temporaryUrl('Promociones/'.$row->image, now()->addHours(12));
             }
             $i++;
         }

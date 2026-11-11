@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Monitoreo')
 @section('metodosjs')
 @include('jsViews.js_monitoring')
 @endsection
@@ -12,6 +13,12 @@
         <div class="content">            
 
             @include('layouts.nav_importacion')
+            <div class="sac-head" style="margin-bottom: 20px">
+              <div>
+                <h1 class="sac-h1">Monitoreo</h1>
+                <p class="sac-sub">Visitas registradas al módulo por usuario</p>
+              </div>
+            </div>
 
             <div class="col-md-12 col-xxl-12 mb-3">
               <div class="card h-100">

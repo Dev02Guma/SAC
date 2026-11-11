@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Artículos favoritos')
 @section('metodosjs')
 @include('jsViews.js_ArticuloFavorito')
 @endsection
@@ -12,6 +13,12 @@
         
         <div class="content">            
             @include('layouts.nav_importacion')
+            <div class="sac-head" style="margin-bottom: 20px">
+              <div>
+                <h1 class="sac-h1">Artículos favoritos</h1>
+                <p class="sac-sub">Artículos destacados para la fuerza de venta</p>
+              </div>
+            </div>
               <div class="card">
                 <div class="card-header d-flex flex-between-center ps-0 py-0 border-bottom">
                   <ul class="nav nav-tabs border-0 flex-nowrap tab-active-caret" id="crm-revenue-chart-tab" role="tablist" data-tab-has-echarts="data-tab-has-echarts">

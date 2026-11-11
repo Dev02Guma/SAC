@@ -1,4 +1,5 @@
 @extends('layouts.lyt_controlados')
+@section('sac_title', 'Controlados')
 @section('metodosjs')
     @include('Controlados.js_controlados')
 @endsection
@@ -11,6 +12,12 @@
     <div class="container-fluid" data-layout="container">        
         <div class="content">            
             @include('layouts.nav_importacion')
+            <div class="sac-head" style="margin-bottom: 20px">
+              <div>
+                <h1 class="sac-h1">Controlados</h1>
+                <p class="sac-sub">Reporte de medicamentos controlados</p>
+              </div>
+            </div>
             <div class="card mb-3">
                 <div class="card-body">
 

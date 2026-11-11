@@ -64,6 +64,9 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT',true),
+            // Verificacion SSL del endpoint S3. Solo en desarrollo local se apaga con
+            // AWS_SSL_VERIFY=false en el .env; en produccion no definas la variable (queda en true).
+            'http' => ['verify' => env('AWS_SSL_VERIFY', true)],
         ],
         // REMOVER CUANDO SE RESTAURE EL ENRUTAMIENTOS DE LAS IP PUBLICAS
         's3_tmp' => [
@@ -75,6 +78,9 @@ return [
             'url' => env('AWS_URL_TMP'),
             'endpoint' => env('AWS_ENDPOINT_TMP'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT',true),
+            // Verificacion SSL del endpoint S3. Solo en desarrollo local se apaga con
+            // AWS_SSL_VERIFY=false en el .env; en produccion no definas la variable (queda en true).
+            'http' => ['verify' => env('AWS_SSL_VERIFY', true)],
         ],
         // REMOVER CUANDO SE RESTAURE EL ENRUTAMIENTOS DE LAS IP PUBLICAS
         'dpromo' => [

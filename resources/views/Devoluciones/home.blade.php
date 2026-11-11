@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Devoluciones')
 @section('metodosjs')
 @include('jsViews.js_Devoluciones')
 @endsection
@@ -12,6 +13,12 @@
         
         <div class="content">            
             @include('layouts.nav_importacion')
+            <div class="sac-head" style="margin-bottom: 20px">
+              <div>
+                <h1 class="sac-h1">Devoluciones</h1>
+                <p class="sac-sub">Consulta de devoluciones por factura</p>
+              </div>
+            </div>
 
             <div class="d-flex justify-content-center mb-2">
                 <div id="id_loading" class="spinner-border" role="status">

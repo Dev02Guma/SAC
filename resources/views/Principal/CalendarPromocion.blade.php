@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Calendario de promociones')
 @section('metodosjs')
 @include('jsViews.js_Promociones')
 
@@ -12,6 +13,12 @@
       <div class="container-fluid" data-layout="container">
         <div class="content">
         @include('layouts.nav_importacion')
+        <div class="sac-head" style="margin-bottom: 20px">
+          <div>
+            <h1 class="sac-h1">Calendario de promociones</h1>
+            <p class="sac-sub">Crea, edita y programa promociones</p>
+          </div>
+        </div>
           <div class="card mb-3 overflow-hidden">
             <div class="card-header">
               <div class="row gx-0 align-items-center">

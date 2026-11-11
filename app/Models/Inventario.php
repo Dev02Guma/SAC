@@ -63,6 +63,18 @@ class Inventario extends Model
         $listaArticulos = Inventario::with('cuarentena')->whereIn('ARTICULO',$ArticuloCache)->get();
         $Info_Articulo = Productos::whereIn('product_sku', $ArticuloCache)->get();
 
+        // Próximo vencimiento por artículo (lotes con existencia en bodegas 002 y 005), en una sola consulta.
+        try {
+            $ProxVencimiento = Lotes::whereIn('ARTICULO', $ArticuloCache)
+                ->whereIn('BODEGA', ['002', '005'])
+                ->where('CANT_DISPONIBLE', '>', 0)
+                ->groupBy('ARTICULO')
+                ->selectRaw('ARTICULO, MIN(FECHA_VENCIMIENTO) AS PROX_VENC')
+                ->pluck('PROX_VENC', 'ARTICULO');
+        } catch (\Throwable $e) {
+            $ProxVencimiento = collect();
+        }
+
         foreach($listaArticulos as $item){
 
             $img = "item.png";
@@ -87,16 +99,17 @@ class Inventario extends Model
             }
             $json[$i]['IMG_NOMBRE'] = $img;
         
-            $cachedImageUrl = Redis::get('Arti_Url_Img_' . $item->ARTICULO);
+            $cachedImageUrl = Redis::get('Arti_Url_Img_v2_' . $item->ARTICULO);
             if ($cachedImageUrl) {
                 $imgUrl = $cachedImageUrl;
             } else {
-                $imgUrl = Storage::disk('s3')->temporaryUrl('product/'.$img, now()->addMinutes(5));
-                Redis::setex('Arti_Url_Img_' . $item->ARTICULO, 300, $imgUrl); 
+                $imgUrl = Storage::disk('s3')->temporaryUrl('product/'.$img, now()->addHours(12)); // válida 12 h; Redis la guarda 6 h
+                Redis::setex('Arti_Url_Img_v2_' . $item->ARTICULO, 21600, $imgUrl); 
             }
 
             $json[$i]['IMG_URL'] = $imgUrl;
             $json[$i]['cuarentena'] = $item->cuarentena;
+            $json[$i]['PROX_VENC'] = isset($ProxVencimiento[$item->ARTICULO]) ? date('Y-m-d', strtotime($ProxVencimiento[$item->ARTICULO])) : null;
 
             $i++;
         }

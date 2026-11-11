@@ -63,7 +63,26 @@ class HomeController extends Controller {
         }
         
         $promocion = Promocion::orderBy('fechaInicio')->where('Activo','S')->get();
-        return view('Principal.Home', compact('Lista_SAC','SAC','Normal', 'promocion'));
+
+        // Datos del artículo de cada promoción (laboratorio, unidad y regla de bonificación) para las tarjetas
+        $artPromo = collect();
+        try {
+            $codigos = $promocion->pluck('articulo')->filter()->unique()->values()->all();
+            if (count($codigos)) {
+                $artPromo = Inventario::select('ARTICULO', 'LABORATORIO', 'UNIDAD_ALMACEN', 'REGLAS')
+                    ->whereIn('ARTICULO', $codigos)->get()->keyBy('ARTICULO');
+            }
+        } catch (\Throwable $e) {
+            $artPromo = collect();
+        }
+
+        // Artículos para el modal "Nueva promoción" (solo roles que administran promociones)
+        $articulos = collect();
+        if (Session::get('rol') == '1' || Session::get('rol') == '2') {
+            $articulos = Inventario::select('ARTICULO', 'DESCRIPCION')->orderBy('DESCRIPCION')->get();
+        }
+
+        return view('Principal.Home', compact('Lista_SAC','SAC','Normal', 'promocion', 'articulos', 'artPromo'));
         
     }
     public function getEstadistiacas()

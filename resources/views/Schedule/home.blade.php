@@ -1,4 +1,5 @@
 @extends('layouts.lyt_gumadesk')
+@section('sac_title', 'Agenda de visitas')
 @section('metodosjs')
 @include('jsViews.js_Schedule')
 @endsection
@@ -12,6 +13,12 @@
         <div class="content">
           @if(!request()->is('api*'))
               @include('layouts.nav_importacion')
+              <div class="sac-head" style="margin-bottom: 20px">
+                <div>
+                  <h1 class="sac-h1">Agenda de visitas</h1>
+                  <p class="sac-sub">Programa y da seguimiento a las visitas de la ruta</p>
+                </div>
+              </div>
           @endif
           <div class="card mb-3 overflow-hidden mt-3">
             <div class="card-header">
