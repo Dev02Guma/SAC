@@ -1203,49 +1203,115 @@
                     return `<span class="badge rounded-pill ms-3 badge-soft-info ">`+ numeral(row.PRECIO).format('0,00.00')  +`</span> `
                 }},
                 ]
+    // ===== Modal de artículo (nueva UI) =====
+    var SAC_ICO_IMG = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>';
+    function sacPrecio(lista, i) {
+        var p = lista && lista[i] ? lista[i].PRECIO : null;
+        return p == null ? 'C$ —' : sacMoney(p);
+    }
+    function sacVenceTag(f) {
+        // f = "dd/mm/aaaa"
+        var p = String(f || '').split('/');
+        if (p.length !== 3) return '<span class="sac-tag sac-tag-neutral">' + sacEsc(f || '—') + '</span>';
+        var d = new Date(+p[2], +p[1] - 1, +p[0]), dias = Math.round((d - new Date()) / 864e5);
+        var cls = dias < 90 ? 'sac-tag-bad' : (dias <= 180 ? 'sac-tag-warn' : 'sac-tag-neutral');
+        return '<span class="sac-tag ' + cls + ' sac-num">' + sacEsc(f) + '</span>';
+    }
+    function sacBodegaHtml(b, i) {
+        var cant = sacNum(b.CANT_DISPONIBLE);
+        return '<div class="sac-bod" data-bod="' + sacEsc(b.BODEGA) + '">' +
+            '<button type="button" class="sac-bod-head" aria-expanded="false" aria-controls="sacBodLotes' + i + '">' +
+              '<span class="sac-chev" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"></path></svg></span>' +
+              '<span class="sac-bod-txt"><span class="sac-bod-name">' + sacEsc(b.BODEGA) + ' · ' + sacEsc(b.NOMBRE) + '</span><span class="sac-bod-sub">Cantidad disponible</span></span>' +
+              '<span class="sac-tag ' + (cant > 0 ? 'sac-tag-info' : 'sac-tag-neutral') + ' sac-num">' + numeral(cant).format('0,0.00') + '</span>' +
+            '</button>' +
+            '<div class="sac-bod-lotes" id="sacBodLotes' + i + '" hidden></div>' +
+          '</div>';
+    }
+    // Desplegar una bodega: consulta sus lotes la primera vez
+    $(document).on('click', '#sacInvBodegas .sac-bod-head', function () {
+        var head = $(this), bod = head.closest('.sac-bod'), box = bod.find('.sac-bod-lotes');
+        var abrir = head.attr('aria-expanded') !== 'true';
+        head.attr('aria-expanded', abrir ? 'true' : 'false');
+        bod.toggleClass('is-open', abrir);
+        box.prop('hidden', !abrir);
+        if (!abrir || box.data('cargado')) return;
+        box.html('<p class="sac-bod-msg">Cargando lotes…</p>');
+        $.ajax({ url: 'getLotes/' + bod.attr('data-bod') + '/' + $('#id_codigo_articulo').text(), dataType: 'json' })
+            .done(function (r) {
+                var lotes = (r && r.data) ? r.data : [];
+                box.data('cargado', true);
+                if (!lotes.length) { box.html('<p class="sac-bod-msg">Bodega sin existencia en lotes</p>'); return; }
+                box.html('<div class="sac-lote is-head"><span>Lote</span><span class="text-end">Cant. disponible</span><span class="text-end">Fecha vencimiento</span></div>' +
+                    lotes.map(function (l) {
+                        return '<div class="sac-lote"><span class="sac-num"><strong>' + sacEsc(l.LOTE) + '</strong></span>' +
+                            '<span class="text-end sac-num">' + sacEsc(l.CANT_DISPONIBLE) + '</span>' +
+                            '<span class="text-end">' + sacVenceTag(l.FECHA_VENCIMIENTO) + '</span></div>';
+                    }).join(''));
+            })
+            .fail(function () { box.html('<p class="sac-bod-msg sac-err">No se pudieron cargar los lotes</p>'); });
+    });
+
     function OpenModal(Id, img){
-        var regla ='';
-        var reglas_bonificadas;
-        var myArray;
+        var req = window.sacArtReq = (window.sacArtReq || 0) + 1;
+        // Datos de la fila del inventario (nombre de imagen y descripción, para ver/subir la foto)
+        var fila = null;
+        if ($.fn.dataTable.isDataTable('#tbl_inventario')) {
+            $('#tbl_inventario').DataTable().rows().every(function () { if (!fila && this.data().ARTICULO == Id) fila = this.data(); });
+        }
+
+        // Limpiar todo antes de la respuesta
         $("#id_load_articulo").show();
+        $("#id_nombre_articulo").text('Cargando…');
+        $("#sacInvUnidad, #id_codigo_articulo, #lbl_unidad").text('');
+        $("#id_precio_farmacia, #id_precio_mayorista, #id_precio_inst_pub, #id_precio_mayortista").text('C$ —');
+        $("#id_reglas").html('');
+        $("#sacInvTotal").text('—');
+        $("#opcion1").prop('checked', false).val('');
+        $("#sacInvRevision").addClass('d-none');
+        $("#sacInvBodegas").html('<div class="sac-skel">' + Array(4).join('<div class="sac-skel-row"><i class="sac-skel-dot"></i><i style="flex:3"></i><i></i></div>') + '</div>');
+        var ini = sacIniciales(fila ? fila.DESCRIPCION : Id);
+        var imgTag = img ? '<img src="' + sacEsc(img) + '" alt="" onerror="this.remove()">' : '';
+        $("#sacInvHeadThumb").html(imgTag + '<span>' + sacEsc(ini) + '</span>');
+        // Texto de respaldo siempre debajo; la foto va encima y se quita si no carga
+        $("#artImg").html('<span class="sac-imodal-ph">' + SAC_ICO_IMG + 'Imagen del producto</span>' + (img ?
+            '<img class="img-fluid" src="' + sacEsc(img) + '" alt="Imagen del producto" arti="' + sacEsc(Id) + '" descr="' + sacEsc(fila ? fila.DESCRIPCION : '') + '" nombreImg="' + sacEsc(fila ? fila.IMG_NOMBRE : '') + '" title="Toca para ampliar" onerror="this.remove()">' : ''));
 
-        $.get( "getDataArticulo/" + Id, function( data ) {
+        bootstrap.Modal.getOrCreateInstance(document.querySelector(Selectors.id_mdl_info_producto)).show();
 
-            reglas_bonificadas = data[0].InfoArticulo[0].REGLAS
-            
-            myArray = reglas_bonificadas.split(",");
-            $.each( myArray, function( key, value ) {
-                regla +='<span class="badge rounded-pill fs--2 bg-200 text-primary ms-1"><span class="fas fa-caret-up me-1"></span>'+value+'</span>'
-                
-            });
-            $("#id_reglas").html(regla);
-            $("#id_codigo_articulo").html(data[0].InfoArticulo[0].ARTICULO);
-            $("#lbl_unidad").html(data[0].InfoArticulo[0].UNIDAD);            
-            $("#id_nombre_articulo").html(data[0].InfoArticulo[0].DESCRIPCION.toUpperCase());
-            $("#opcion1").val(data[0].InfoArticulo[0].ARTICULO);
-            data[0].InfoArticulo[0]['cuarentena'] != null ? $("#opcion1").prop('checked',true) : $("#opcion1").prop('checked',false);
+        $.get("getDataArticulo/" + Id, function (data) {
+            if (req !== window.sacArtReq) return;
+            var info = (data[0].InfoArticulo || [])[0] || {}, precios = data[0].NivelPrecio || [], bods = data[0].Bodega || [];
 
-            initTable_modal('#tbl_bodegas',data[0].Bodega,tbl_header_bodega);
-            //initTable_modal('#tbl_lista_precios',data[0].NivelPrecio,tbl_header_nivel_precio);
-            
-            $("#artImg").html('<img class="rounded-1 border border-200 img-fluid" src="'+img+'" alt="" width="200">');
+            $("#id_codigo_articulo").text(info.ARTICULO || Id);
+            $("#lbl_unidad").text(info.UNIDAD || '');
+            $("#id_nombre_articulo").text(String(info.DESCRIPCION || '').toUpperCase());
+            $("#sacInvUnidad").text(info.UNIDAD ? ' · ' + info.UNIDAD : '');
+            $("#sacInvHeadThumb span").text(sacIniciales(info.DESCRIPCION));
 
-            
-            $("#id_precio_farmacia").html("C$ " + data[0].NivelPrecio[0].PRECIO)
-            $("#id_precio_mayorista").html("C$ " + data[0].NivelPrecio[2].PRECIO)
-            $("#id_precio_inst_pub").html("C$ " + data[0].NivelPrecio[1].PRECIO)
-            $("#id_precio_mayortista").html("C$ " + data[0].NivelPrecio[3].PRECIO)
-           
+            var reglas = String(info.REGLAS || '0') === '0' ? [] : String(info.REGLAS).split(',').map(function (r) { return $.trim(r); }).filter(Boolean);
+            $("#id_reglas").html(reglas.length ? reglas.map(function (r) { return '<span class="sac-tag sac-tag-info">' + sacEsc(r.replace(/\s*\+\s*/g, ' + ')) + '</span>'; }).join('') : '<span class="sac-muted">Sin bonificación</span>');
+
+            $("#opcion1").val(info.ARTICULO || Id).prop('checked', info.cuarentena != null);
+            $("#sacInvRevision").toggleClass('d-none', info.cuarentena == null);
+
+            // Mismo orden de niveles que la versión anterior
+            $("#id_precio_farmacia").text(sacPrecio(precios, 0));
+            $("#id_precio_mayorista").text(sacPrecio(precios, 2));
+            $("#id_precio_inst_pub").text(sacPrecio(precios, 1));
+            $("#id_precio_mayortista").text(sacPrecio(precios, 3));
+
+            var total = bods.reduce(function (a, b) { return a + sacNum(b.CANT_DISPONIBLE); }, 0);
+            $("#sacInvTotal").text(numeral(total).format('0,0.00'));
+            $("#sacInvBodegas").html(bods.length ? bods.map(sacBodegaHtml).join('') : '<p class="sac-bod-msg">Sin existencias registradas</p>');
+
             $("#id_load_articulo").hide();
-        })
-
-       
-
-        var id_mdl_info_producto = document.querySelector(Selectors.id_mdl_info_producto);
-        var modal_articulo = new window.bootstrap.Modal(id_mdl_info_producto);
-        modal_articulo.show();
-
-       
+        }).fail(function () {
+            if (req !== window.sacArtReq) return;
+            $("#id_nombre_articulo").text('No se pudo cargar el artículo');
+            $("#sacInvBodegas").html('<p class="sac-bod-msg sac-err">Intenta de nuevo en unos segundos.</p>');
+            $("#id_load_articulo").hide();
+        });
     }
 
     var SAC_MORA_COLORES = ['#93C5FD', '#FACC15', '#F59E0B', '#EA580C', '#C2410C', '#7F1D1D'];

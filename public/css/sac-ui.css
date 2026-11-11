@@ -673,6 +673,49 @@ html[data-sac-theme="dark"] .sac-tag.sac-rol-sup { background: rgba(41,182,232,.
   .sac-pf-row3 { grid-template-columns: 1fr; }
 }
 
+/* ---------- Modal de artículo (inventario) ---------- */
+body.sac .sac-imodal .modal-dialog { max-width: 860px; }
+.sac-thumb.sac-thumb-lg { width: 44px; height: 44px; border-radius: 12px; font-size: 13px; }
+body.sac .sac-imodal-title { font-size: 18px; color: var(--sac-link); }
+.sac-imodal-unit { color: var(--sac-link); }
+body.sac .sac-imodal .modal-body.sac-imodal-body { padding: 0 !important; }
+.sac-imodal-top { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 18px; padding: 18px 20px; }
+.sac-imodal-img {
+  position: relative; aspect-ratio: 1; border-radius: 14px; border: 1px solid var(--sac-border);
+  background: var(--sac-surface-2); overflow: hidden; display: flex; align-items: center; justify-content: center;
+}
+.sac-imodal-ph { display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 12.5px; color: var(--sac-muted); text-align: center; padding: 8px; }
+.sac-imodal-img img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; background: #fff; cursor: zoom-in; }
+.sac-prices { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1px; background: var(--sac-border-soft); border: 1px solid var(--sac-border); border-radius: 12px; overflow: hidden; }
+.sac-price { background: var(--sac-surface); padding: 10px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.sac-price strong { font: 700 20px/1.15 var(--sac-font-num); color: var(--sac-ink); white-space: nowrap; }
+.sac-imodal-meta { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.sac-check { display: inline-flex; align-items: center; gap: 8px; margin: 0; font-size: 13.5px; color: var(--sac-ink-2); cursor: pointer; }
+.sac-check input { width: 18px; height: 18px; accent-color: var(--sac-primary); }
+.sac-check-txt { font-size: 13.5px; color: var(--sac-ink-2); }
+.sac-imodal-stock { padding: 16px 20px 20px; border-top: 1px solid var(--sac-border-soft); }
+.sac-bods { display: flex; flex-direction: column; gap: 10px; }
+.sac-bod { border: 1px solid var(--sac-border); border-radius: 12px; overflow: hidden; background: var(--sac-surface); }
+.sac-bod.is-open { border-color: var(--sac-sel-border); }
+.sac-bod-head { width: 100%; display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 0; background: transparent; text-align: left; font: inherit; color: inherit; cursor: pointer; min-height: 56px; }
+.sac-bod-head:hover { background: var(--sac-hover); }
+.sac-bod.is-open .sac-bod-head { background: var(--sac-sel); }
+.sac-bod.is-open .sac-chev { background: var(--sac-primary); color: #fff; transform: rotate(90deg); }
+.sac-bod-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.sac-bod-name { font-size: 12px; font-weight: 600; color: var(--sac-muted); }
+.sac-bod-sub { font-size: 14px; color: var(--sac-ink); }
+.sac-bod-lotes { padding: 4px 16px 10px 54px; border-top: 1px solid var(--sac-sel-border); background: var(--sac-surface-2); animation: sacFade .2s ease-out; }
+.sac-lote { display: grid; grid-template-columns: minmax(0, 1fr) 150px 160px; gap: 12px; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--sac-border-soft); font-size: 13.5px; }
+.sac-lote:last-child { border-bottom: 0; }
+.sac-lote.is-head { font-size: 11.5px; color: var(--sac-muted); font-weight: 500; }
+.sac-bod-msg { margin: 0; padding: 12px 0; font-size: 13px; color: var(--sac-muted); }
+@media (max-width: 640px) {
+  .sac-imodal-top { grid-template-columns: 1fr; }
+  .sac-imodal-img { max-width: 180px; }
+  .sac-bod-lotes { padding-left: 16px; }
+  .sac-lote { grid-template-columns: 1fr 100px 110px; }
+}
+
 /* ---------- Badges ---------- */
 body.sac .badge { border-radius: 999px; font-weight: 600; font-size: 12px; padding: 4px 10px; }
 body.sac .badge-soft-primary { background: var(--sac-primary-soft) !important; color: var(--sac-link) !important; }

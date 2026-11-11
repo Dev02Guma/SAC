@@ -619,122 +619,69 @@
         <!--OPEN MODALS -->
     
        
-        <div class="modal fade" id="modal_info_inventario" data-bs-keyboard="false" data-bs-backdrop="static" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-          <div class="modal-dialog modal-xl" role="document">
-            <div class="modal-content border-0">
-              <div class="position-absolute top-0 end-0 mt-3 me-3 z-index-1">
-                <button class="btn-close btn btn-sm btn-circle d-flex flex-center transition-base" data-bs-dismiss="modal" aria-label="Close" ></button>
+        <div class="modal fade sac-imodal" id="modal_info_inventario" tabindex="-1" aria-labelledby="id_nombre_articulo" aria-hidden="true">
+          <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" role="document">
+            <div class="modal-content">
+
+              <div class="sac-mhead">
+                <span class="sac-thumb sac-thumb-lg" id="sacInvHeadThumb" aria-hidden="true"></span>
+                <div class="sac-mhead-txt">
+                  <h2 class="sac-mtitle sac-imodal-title"><span id="id_nombre_articulo">Cargando…</span><span class="sac-imodal-unit" id="sacInvUnidad"></span></h2>
+                  <p class="sac-cli-sub mb-0"><span id="id_codigo_articulo"></span><span class="d-none" id="lbl_unidad"></span></p>
+                </div>
+                <div class="spinner-border spinner-border-sm text-primary ms-auto" role="status" id="id_load_articulo"><span class="visually-hidden">Cargando…</span></div>
+                <button type="button" class="sac-ib sac-ib-ghost" data-bs-dismiss="modal" aria-label="Cerrar">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"></path></svg>
+                </button>
               </div>
-              <div class="position-absolute top-0 end-0 mt-3 me-7 z-index-1">
-                <div class="spinner-border" role="status" id="id_load_articulo"></div>
-              </div>
-              
-                <div class="card-header bg-light">          
-                    <div class="row justify-content-between">
-                      <div class="col">
-                        <div class="d-flex">
-                          <div class="avatar avatar-2xl status-online">
-                            <img class="rounded-circle" src="{{ asset('images/user/avatar-4.jpg') }}" alt="" />
-                          </div>
-                          <div class="flex-1 align-self-center ms-2">
-                            <p class="mb-1 lh-1"> <a class="fw-semi-bold" href="#!" > <span id="id_nombre_articulo"> <span id=""></span> </span> </a> </p>
-                            <p class="mb-0 fs--1"> <span id="id_codigo_articulo"></span>  &bull;  <span id="lbl_unidad"></span>  &bull; <span class="fas fa-globe-americas"></span></p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+
+              <div class="modal-body sac-imodal-body">
+                <div class="sac-imodal-top">
+                  {{-- Imagen del producto (al tocarla: ver en grande o, si no tiene, subir una) --}}
+                  <div class="sac-imodal-img" id="artImg">
+                    <span class="sac-imodal-ph">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><circle cx="9" cy="9" r="2"></circle><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"></path></svg>
+                      Imagen del producto
+                    </span>
                   </div>
-                  <div class="modal-body p-0">
 
-                  
-                  <div class="row g-3">
-                <div class="col-12">
-                  <div class="card h-100">
-                    <div class="card-header">
-                      <div class="row flex-between-center">
-                        <div class="col-4 d-flex align-items-center position-relative" id="artImg">
-                          
-                        </div>
-                        <div class="col-1">
-                        </div>
-                        
-                        <div class="col-auto">
-                          <div class="row g-sm-4">
-                            <div class="col-12 col-sm-auto">
-                              <div class="mb-3 pe-4 border-sm-end border-200">
-                                <h6 class="fs--2 text-600 mb-1">FARMACIA</h6>
-                                <div class="d-flex align-items-center">
-                                  <h5 class="fs-0 text-900 mb-0 me-2" id="id_precio_farmacia">C$ 0.00</h5>
-                                </div>
-                              </div>
-                            </div>
-                            <div class="col-12 col-sm-auto">
-                              <div class="mb-3 pe-4 border-sm-end border-200">
-                                <h6 class="fs--2 text-600 mb-1">MAYORISTA</h6>
-                                <div class="d-flex align-items-center">
-                                  <h5 class="fs-0 text-900 mb-0 me-2" id="id_precio_mayorista">C$ 0.00</h5>
-                                </div>
-                              </div>
-                            </div>
-
-                            
-                            @if (Session::get('rol') == '1' || Session::get('rol') == '2' || Session::get('rol') == '9' )
-                            <div class="col-12 col-sm-auto">
-                              <div class="mb-3 pe-4 border-sm-end border-200">
-                                <h6 class="fs--2 text-600 mb-1">INS. PUB</h6>
-                                <div class="d-flex align-items-center">
-                                  <h5 class="fs-0 text-900 mb-0 me-2" id="id_precio_inst_pub">C$ 0.00</h5>
-                                </div>
-                              </div>
-                            </div>
-                            @endif
-                            <div class="col-12 col-sm-auto">
-                              <div class="mb-3 pe-0">
-                                <h6 class="fs--2 text-600 mb-1">PUBLICO</h6>
-                                <div class="d-flex align-items-center">
-                                  <h5 class="fs-0 text-900 mb-0 me-2" id="id_precio_mayortista">C$ 0.00</h5>
-                                </div>
-                              </div>
-                            </div>
-                            
-                          </div>
-                          <div class="col-auto">
-                            <h6 class="mb-2" id="id_reglas">Cargando ... </h6>
-                          </div>
-                          @if (Session::get('rol') == '1' || Session::get('rol') == '2') 
-                            <div class="checkbox-container mr-5" style="text-align: right;">
-                              <input type="checkbox" id="opcion1" name="opciones[]" value="">
-                              <label for="opcion1" style="margin-right: 10px;">En Revision</label>
-                            </div>
-                          @endif
-                        </div>
-                        
-                      </div>
+                  <div class="sac-imodal-info">
+                    <div class="sac-prices">
+                      <div class="sac-price"><span class="sac-kl">Farmacia</span><strong class="sac-num" id="id_precio_farmacia">C$ —</strong></div>
+                      <div class="sac-price"><span class="sac-kl">Mayorista</span><strong class="sac-num" id="id_precio_mayorista">C$ —</strong></div>
+                      @if (Session::get('rol') == '1' || Session::get('rol') == '2' || Session::get('rol') == '9')
+                        <div class="sac-price"><span class="sac-kl">Inst. pública</span><strong class="sac-num" id="id_precio_inst_pub">C$ —</strong></div>
+                      @endif
+                      <div class="sac-price"><span class="sac-kl">Público</span><strong class="sac-num" id="id_precio_mayortista">C$ —</strong></div>
                     </div>
-                    <div class="card-header">                    
-                      <div class="row flex-between-center">                        
-                        <div class="col-md-12 col-xxl-12">           
-                          <div class="card h-100">                           
-                            <div class="card-body">                              
-                              <table id="tbl_bodegas" class="table table-striped overflow-hidden" style="width:100%"></table>
-                            </div>
-                          </div>
-                        </div>
-                        
+                    <div class="sac-imodal-meta">
+                      <div class="d-flex align-items-center flex-wrap gap-2">
+                        <span class="sac-muted">Bonificación</span>
+                        <span id="id_reglas" class="d-inline-flex flex-wrap gap-1"></span>
                       </div>
+                      @if (Session::get('rol') == '1' || Session::get('rol') == '2')
+                        <label class="d-inline-flex align-items-center gap-2 m-0" style="cursor: pointer">
+                          <span class="sac-switch sac-switch-ok"><input type="checkbox" role="switch" id="opcion1" name="opciones[]" value=""><span aria-hidden="true"></span></span>
+                          <span class="sac-check-txt">En revisión</span>
+                        </label>
+                      @else
+                        <span class="sac-tag sac-tag-warn d-none" id="sacInvRevision">En revisión</span>
+                      @endif
                     </div>
-                   
                   </div>
                 </div>
-              
-              </div>
+
+                <div class="sac-imodal-stock">
+                  <div class="d-flex align-items-center justify-content-between gap-2 mb-2">
+                    <h3 class="sac-card-title">Existencias por bodega</h3>
+                    <span class="sac-muted">Total disponible <strong class="sac-num" id="sacInvTotal">—</strong></span>
+                  </div>
+                  <div class="sac-bods" id="sacInvBodegas" aria-live="polite"></div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-          
-
 
         <div class="modal fade sac-modal" id="modal_info_cliente" data-bs-keyboard="true" data-bs-backdrop="static" tabindex="-1" aria-labelledby="lbl_nombre_cliente" aria-hidden="true">
           <div class="modal-dialog modal-xl modal-dialog-scrollable" role="document">
