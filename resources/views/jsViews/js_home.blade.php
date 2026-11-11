@@ -171,6 +171,9 @@
             'Mostrando <strong>' + (info.start + 1) + '–' + info.end + '</strong> de <strong>' + numeral(info.recordsDisplay).format('0,0') + '</strong> pedidos' :
             'No hay pedidos con este filtro en el rango seleccionado');
         var pag = $('#tbl_mst_pedido_paginate'), foot = $('#sacPedFoot');
+        // Al volver a crear la tabla (otro rango de fechas) DataTables genera una paginación nueva;
+        // se quita la anterior que ya estaba en el pie para que no queden dos.
+        foot.find('.dataTables_paginate').not(pag).remove();
         if (pag.length && !pag.parent().is(foot)) foot.append(pag.addClass('sac-pager'));
         sacPedBotonTodo();
     });
@@ -626,6 +629,9 @@
             'Mostrando <strong>' + (info.start + 1) + '–' + info.end + '</strong> de <strong>' + numeral(info.recordsDisplay).format('0,0') + '</strong> lotes' :
             'Sin lotes que coincidan');
         var pag = $('#' + id + '_paginate');
+        // Al volver a crear la tabla (otro rango de fechas) DataTables genera una paginación nueva;
+        // se quita la anterior que ya estaba en el pie para que no queden dos.
+        foot.find('.dataTables_paginate').not(pag).remove();
         if (pag.length && !pag.parent().is(foot)) foot.append(pag.addClass('sac-pager'));
     });
 
