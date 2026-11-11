@@ -196,6 +196,55 @@
         if (actual && rutas[actual]) sel.val(actual); else { sel.val(''); sacPed.ruta = ''; }
     }
 
+    // Actualizar: consulta solo los pendientes del rango/SAC actual y los mezcla en la tabla,
+    // conservando filtros, página y pedidos desplegados (sin recargar la página).
+    function sacPedActualizar() {
+        var btn = $('#sacPedActualizar');
+        if (btn.prop('disabled')) return;
+        var rango = String($('#id_range_select').val() || '').split('to').map(function (x) { return $.trim(x); });
+        if (rango.length < 2 || !rango[0] || !rango[1]) return;
+        var api = $('#tbl_mst_pedido').DataTable();
+        var abiertos = {};
+        api.rows().every(function () { if (this.child.isShown()) abiertos[this.data().id] = true; });
+        var antes = {};
+        api.rows().data().toArray().forEach(function (r) { antes[r.id] = sacPedSt(r).key; });
+
+        btn.prop('disabled', true).addClass('is-loading');
+        $.ajax({
+            url: 'getPedidosRangeDates', type: 'post', dataType: 'json',
+            data: { DateStart: rango[0], DateEnds: rango[1], Estado: 0, SAC: $('#id_select_sac option:selected').val(), _token: "{{ csrf_token() }}" }
+        }).done(function (pendientes) {
+            pendientes = pendientes || [];
+            var idsNuevos = {}; pendientes.forEach(function (r) { idsNuevos[r.id] = true; });
+            // Quita los pendientes que ya tenía la tabla (se reemplazan por la versión fresca)
+            api.rows(function (idx, data) { return sacPedSt(data).key === 'pend' || idsNuevos[data.id]; }).remove();
+            api.rows.add(pendientes);
+            api.draw(false);
+
+            var nuevos = pendientes.filter(function (r) { return !antes[r.id]; }).length;
+            var cambiaron = Object.keys(antes).filter(function (id) { return antes[id] === 'pend' && !idsNuevos[id]; }).length;
+            sacPedCargados(api.rows().data().toArray());
+
+            // Reabrir los que estaban desplegados y resaltar los nuevos
+            api.rows({ page: 'current' }).every(function () {
+                var d = this.data(), tr = this.node();
+                if (abiertos[d.id]) sacPedToggle(tr, true);
+                if (!antes[d.id]) { $(tr).addClass('sac-ped-new'); setTimeout(function () { $(tr).removeClass('sac-ped-new'); }, 2600); }
+            });
+
+            var partes = [];
+            if (nuevos) partes.push(nuevos + (nuevos === 1 ? ' pendiente nuevo' : ' pendientes nuevos'));
+            if (cambiaron) partes.push(cambiaron + (cambiaron === 1 ? ' ya no está pendiente' : ' ya no están pendientes'));
+            var msg = partes.length ? partes.join(' · ') : 'Sin cambios en pendientes';
+            $('#sacPedActualizarEstado').text(msg);
+            btn.attr('title', 'Actualizado ' + moment().format('HH:mm') + ' · ' + msg);
+            if (window.Swal) Swal.fire({ toast: true, position: 'top-end', icon: partes.length ? 'info' : 'success', title: msg, showConfirmButton: false, timer: 2200 });
+        }).fail(function () {
+            if (window.Swal) Swal.fire({ toast: true, position: 'top-end', icon: 'error', title: 'No se pudieron consultar los pendientes', showConfirmButton: false, timer: 2600 });
+        }).always(function () { btn.prop('disabled', false).removeClass('is-loading'); });
+    }
+    $(document).on('click', '#sacPedActualizar', sacPedActualizar);
+
     // Exportar pedidos (lo filtrado) a CSV
     $(document).on('click', '#sacPedExport', function () {
         var rows = $('#tbl_mst_pedido').DataTable().rows({ search: 'applied' }).data().toArray();
@@ -369,12 +418,6 @@
         if (!row.REGLAS || row.REGLAS == '0') return [];
         return String(row.REGLAS).split(',').map(function (r) { return $.trim(r); }).filter(Boolean);
     }
-    // Meses que faltan para el próximo vencimiento (null si no hay lote con existencia)
-    function sacInvMeses(row) {
-        if (!row.PROX_VENC) return null;
-        var p = String(row.PROX_VENC).split('-'), hoy = new Date();
-        return (parseInt(p[0], 10) - hoy.getFullYear()) * 12 + (parseInt(p[1], 10) - 1 - hoy.getMonth());
-    }
     function sacIniciales(txt) {
         var w = String(txt || '').replace(/[^A-Za-zÁÉÍÓÚÑáéíóúñ0-9 ]/g, ' ').split(/\s+/).filter(Boolean);
         return ((w[0] || '?').charAt(0) + (w[1] || '').charAt(0)).toUpperCase();
@@ -383,9 +426,17 @@
     $.fn.dataTable.ext.search.push(function (settings, data, idx, row) {
         if (settings.nTable.id !== 'tbl_inventario') return true;
         if (sacInv.chip === 'bonif') return sacInvReglas(row).length > 0;
-        if (sacInv.chip === 'vence') { var m = sacInvMeses(row); return m !== null && m <= 6; }
         if (sacInv.chip === 'revision') return row.cuarentena != null;
         return true;
+    });
+
+    // Filas sin disponible (0 o menos) se muestran atenuadas, como una promoción desactivada
+    $('#tbl_inventario').on('draw.dt', function () {
+        var api = $('#tbl_inventario').DataTable();
+        api.rows({ page: 'current' }).every(function () {
+            var sin = sacInvCant(this.data()) <= 0;
+            $(this.node()).toggleClass('sac-inv-off', sin).attr('title', sin ? 'Sin disponible' : null);
+        });
     });
 
     $(document).on('click', '[data-inv-chip]', function () {
@@ -421,14 +472,6 @@
         { "title": "Precio farmacia", "data": "PRECIO_FARMACIA", "className": "text-end", "searchable": false, "render": function (data, type, row) {
             var p = sacNum(row.PRECIO_FARMACIA);
             return type === 'display' ? '<span class="sac-num">C$ ' + numeral(p).format('0,0.00') + '</span>' : p;
-        }},
-        { "title": "Próx. vencimiento", "data": "PROX_VENC", "searchable": false, "defaultContent": "", "render": function (data, type, row) {
-            var m = sacInvMeses(row);
-            if (type !== 'display') return m === null ? 9999 : m;
-            if (m === null) return '<span class="sac-muted">—</span>';
-            var p = String(row.PROX_VENC).split('-');
-            var cls = m <= 3 ? 'sac-tag-bad' : (m <= 6 ? 'sac-tag-warn' : 'sac-tag-neutral');
-            return '<span class="sac-tag ' + cls + '">' + SAC_MESES[parseInt(p[1], 10) - 1] + ' ' + p[0] + '</span>';
         }},
         { "title": "Bonificación", "data": "REGLAS", "defaultContent": "", "render": function (data, type, row) {
             var r = sacInvReglas(row);
@@ -1223,7 +1266,8 @@
                 }},
                 {"title": "","data": "FACTURA", "render": function(data, type, row) {
                     if (type !== 'display') return row.FACTURA + ' ' + sacFecha(row.Dia);
-                    var vence = row.FECHA_VENCE ? sacEsc(row.FECHA_VENCE) : '—';
+                    var fv = $.trim(row.FECHA_VENCE || '');
+                    var vence = fv && fv.replace(/[-\/\s]/g, '') ? sacEsc(fv) : '—';
                     return '<div class="sac-fact">' +
                         '<span class="sac-fact-main"><span class="sac-fact-no">Fact. ' + sacEsc(row.FACTURA) + '</span>' +
                         '<span class="sac-cli-sub">' + sacFecha(row.Dia) + '</span></span>' +
@@ -1262,7 +1306,34 @@
         sacMoraBarra([0, 0, 0, 0, 0, 0]);
         $('#sac_fact_count').text('');
 
+        // Montos, plan de crecimiento, buscadores y tablas: todo en blanco hasta que llegue la respuesta
+        $('#lbl_limite, #lbl_saldo, #lbl_disponible').text('C$ —');
+        $('#lbl_saldo').removeClass('sac-amt-bad sac-amt-warn sac-amt-zero');
+        $('#lbl_acciones').text('—');
+        $('#id_monto_base, #id_crecimiento_esperado, #id_crecimiento_minimo').text('C$ —');
+        $('#id_porcent_crecimientio').text('— %');
+        $('#id_ttmes').text('');
+        $('#flexSwitchCheckDefault').prop('checked', false);
+        $('#tbl_buscar_history_factura, #tbl_buscar_last3m, #tbl_search_nofacturado').val('');
+        var grafica = document.querySelector('.echart-sale-VentasDelMes');
+        if (grafica && window.echarts && echarts.getInstanceByDom(grafica)) echarts.getInstanceByDom(grafica).clear();
+        ['#tbl_historico_factura', '#tbl_ultm_3m', '#tbl_no_facturado'].forEach(function (sel) {
+            if ($.fn.dataTable.isDataTable(sel)) {
+                var api = $(sel).DataTable();
+                api.search('');
+                api.rows().every(function () { if (this.child.isShown()) this.child.hide(); });
+                api.clear().draw();
+            }
+            if (window.sacTableLoading) sacTableLoading(sel, true);
+        });
+        // Siempre abre en la primera pestaña
+        var tabHist = document.getElementById('historico-factura-tab');
+        if (tabHist) bootstrap.Tab.getOrCreateInstance(tabHist).show();
+        // Descarta respuestas de un cliente abierto antes (si se abren dos seguidos)
+        var sacCliReq = window.sacCliReq = (window.sacCliReq || 0) + 1;
+
         $.get( "getDataCliente/" + Id, function( data ) {
+            if (sacCliReq !== window.sacCliReq) return;
 
             $("#lbl_nombre_cliente").html(data[0].InfoCliente[0].NOMBRE)
             $("#id_load_cliente").hide();
@@ -1511,7 +1582,7 @@ var tooltipFormatter = function tooltipFormatter(params) {
             });
             };
         var id_mdl_info_cliente = document.querySelector(Selectors.id_mdl_info_cliente);
-        var modal = new window.bootstrap.Modal(id_mdl_info_cliente);
+        var modal = bootstrap.Modal.getOrCreateInstance(id_mdl_info_cliente);
         modal.show();
     }
 

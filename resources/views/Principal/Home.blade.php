@@ -387,18 +387,17 @@
                       <div class="d-flex flex-wrap gap-2" role="group" aria-label="Filtrar artículos">
                         <button type="button" class="sac-chip on" data-inv-chip="todos" aria-pressed="true">Todos</button>
                         <button type="button" class="sac-chip" data-inv-chip="bonif" aria-pressed="false">Con bonificación</button>
-                        <button type="button" class="sac-chip" data-inv-chip="vence" aria-pressed="false">Vence pronto</button>
                         <button type="button" class="sac-chip" data-inv-chip="revision" aria-pressed="false">En revisión</button>
                       </div>
-                      <label class="d-flex align-items-center gap-2 ms-auto sac-muted">Filas
+                      <div class="input-group ms-auto" style="max-width: 320px; flex: 0 1 320px">
+                        <span class="input-group-text">{!! $searchIco !!}</span>
+                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar artículo o código…" aria-label="Buscar en inventario" id="tbl_buscar_inventario" />
+                      </div>
+                      <label class="d-flex align-items-center gap-2 sac-muted">
                         <select class="form-select form-select-sm" style="width: auto" id="tbl_select_inventario">
                           @foreach ([10 => '10', 20 => '20', 50 => '50', -1 => 'Todas'] as $v => $t)<option value="{{ $v }}" @if($v == 10) selected @endif>{{ $t }}</option>@endforeach
                         </select>
                       </label>
-                      <div class="input-group" style="max-width: 320px; flex: 0 1 320px">
-                        <span class="input-group-text">{!! $searchIco !!}</span>
-                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar artículo o código…" aria-label="Buscar en inventario" id="tbl_buscar_inventario" />
-                      </div>
                     </div>
                     <div class="sac-tblbox"><table id="tbl_inventario" class="table overflow-hidden" style="width:100%"></table></div>
                   </div>
@@ -411,15 +410,15 @@
                         <button type="button" class="nav-link" data-cli-f="moroso" aria-pressed="false">Morosos <span class="sac-n" id="sac_cli_n_moroso">0</span></button>
                         <button type="button" class="nav-link" data-cli-f="saldo" aria-pressed="false">Con saldo <span class="sac-n" id="sac_cli_n_saldo">0</span></button>
                       </div>
-                      <label class="d-flex align-items-center gap-2 ms-auto sac-muted">Mostrar
+                      <div class="input-group ms-auto" style="max-width: 320px; flex: 0 1 320px">
+                        <span class="input-group-text">{!! $searchIco !!}</span>
+                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar cliente, código o dirección…" aria-label="Buscar clientes" id="tbl_buscar_cliente" />
+                      </div>
+                      <label class="d-flex align-items-center gap-2 sac-muted">Mostrar
                         <select class="form-select form-select-sm" style="width: auto" id="tbl_select_cliente">
                           @foreach ([10 => '10', 25 => '25', 50 => '50', -1 => 'Todos'] as $v => $t)<option value="{{ $v }}" @if($v == 25) selected @endif>{{ $t }}</option>@endforeach
                         </select>
                       </label>
-                      <div class="input-group" style="max-width: 320px; flex: 0 1 320px">
-                        <span class="input-group-text">{!! $searchIco !!}</span>
-                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar cliente, código o dirección…" aria-label="Buscar clientes" id="tbl_buscar_cliente" />
-                      </div>
                     </div>
                     <div class="sac-tblbox"><table id="tbl_mst_clientes" class="table sac-cli-tbl overflow-hidden" style="width:100%"></table></div>
                     <div class="sac-tfoot"><span>Mostrando <span id="sac_cli_shown">0</span> de <span id="sac_cli_total">0</span> clientes</span><span>Toca un cliente para ver su ficha</span></div>
@@ -436,7 +435,7 @@
                               return $d->day . ' ' . $mesesCortos[$d->month - 1] . ($d->year != $hoy->year ? ' ' . $d->year : '');
                           };
                           $puedeEditar = in_array((string) Session::get('rol'), ['1', '2']);
-                          $tonos = ['blue', 'amber', 'green', 'violet'];
+                          $tonos = ['blue', 'cyan', 'amber', 'green'];
                         @endphp
                         <div class="sac-promos">
                           @foreach($promocion as $promo)
@@ -515,15 +514,15 @@
                         <button type="button" class="nav-link" data-ped-f="proc" aria-pressed="false">Procesados <span class="sac-n" id="sac_ped_n_proc">0</span></button>
                         <button type="button" class="nav-link" data-ped-f="canc" aria-pressed="false">Cancelados <span class="sac-n" id="sac_ped_n_canc">0</span></button>
                       </div>
-                      <label class="d-flex align-items-center gap-2 sac-muted">Ruta
+                      <label class="d-flex align-items-center gap-2 sac-muted"><span class="visually-hidden">Ruta</span>
                         <select class="form-select form-select-sm" style="width: auto" id="sacPedRuta">
                           <option value="">Todas las rutas</option>
                         </select>
                       </label>
                       @if( Session::get('rol') == '1' || Session::get('rol') == '2')
-                        <label class="d-flex align-items-center gap-2 sac-muted">SAC
+                        <label class="d-flex align-items-center gap-2 sac-muted"><span class="visually-hidden">SAC</span>
                           <select class="form-select form-select-sm" style="width: auto" id="id_select_sac">
-                            <option value="0">Todas</option>
+                            <option value="0">Todos los SAC</option>
                             @foreach ($Lista_SAC as $vnd)
                               <option value="{{$vnd->username}}">{{$vnd->nombre}}</option>
                             @endforeach
@@ -536,11 +535,18 @@
                         <option value="1">Procesado</option>
                         <option value="2">Cancelado</option>
                       </select>
-                      <div class="input-group ms-auto" style="max-width: 280px; flex: 1 1 200px">
+                      <div class="input-group ms-auto" style="max-width: 240px; flex: 1 1 120px; min-width: 120px">
                         <span class="input-group-text">{!! $searchIco !!}</span>
-                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar pedido…" aria-label="Buscar pedido o cliente" id="id_txt_buscar" />
+                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar…" aria-label="Buscar pedido o cliente" id="id_txt_buscar" />
                       </div>
+                      <div class="d-flex gap-2 flex-nowrap">
                       <button type="button" class="btn btn-sm btn-falcon-default" id="sacPedTodo" data-abrir="1">Expandir todo</button>
+                      <button type="button" class="btn btn-sm sac-refresh" id="sacPedActualizar" title="Consulta solo los pedidos pendientes, sin recargar la página">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"></path><path d="M3 21v-5h5"></path><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"></path><path d="M21 3v5h-5"></path></svg>
+                        <span>Actualizar</span>
+                      </button>
+                      <span class="visually-hidden" id="sacPedActualizarEstado" role="status" aria-live="polite"></span>
+                      </div>
                     </div>
                     <div class="sac-tblbox"><table id="tbl_mst_pedido" class="table sac-ped-tbl overflow-hidden" style="width:100%"></table></div>
                     <div class="sac-tfoot sac-liq-foot" id="sacPedFoot"><span id="sac_ped_info"></span></div>
@@ -549,16 +555,17 @@
                   {{-- ========== LIQUIDACIÓN 12 MESES ========== --}}
                   <div class="tab-pane" id="crm-users" role="tabpanel" aria-labelledby="crm-users-tab">
                     <div class="sac-toolbar">
-                      <div class="input-group" style="max-width: 360px; flex: 1 1 260px">
-                        <span class="input-group-text">{!! $searchIco !!}</span>
-                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar por artículo, código, laboratorio o lote…" aria-label="Buscar en liquidación 12 meses" id="tbl_buscar_liq12" />
-                      </div>
+                      
                       <div class="sac-legend" aria-label="Leyenda de días restantes">
                         <span><i class="is-bad"></i>Menos de 90 días</span>
                         <span><i class="is-warn"></i>90 a 180 días</span>
                         <span><i class="is-info"></i>Más de 180 días</span>
                       </div>
-                      <label class="d-flex align-items-center gap-2 ms-auto sac-muted">Mostrar
+                      <div class="input-group ms-auto" style="max-width: 340px; flex: 0 1 340px">
+                        <span class="input-group-text">{!! $searchIco !!}</span>
+                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar por artículo, código, laboratorio o lote…" aria-label="Buscar en liquidación 12 meses" id="tbl_buscar_liq12" />
+                      </div>
+                      <label class="d-flex align-items-center gap-2 sac-muted">
                         <select class="form-select form-select-sm" style="width: auto" id="tbl_select_liq12">
                           @foreach ($filas as $v => $t)<option value="{{ $v }}" @if($v == 5) selected @endif>{{ $t }}</option>@endforeach
                         </select>
@@ -571,16 +578,17 @@
                   {{-- ========== LIQUIDACIÓN 6 MESES ========== --}}
                   <div class="tab-pane" id="crm-deals" role="tabpanel" aria-labelledby="crm-deals-tab">
                     <div class="sac-toolbar">
-                      <div class="input-group" style="max-width: 360px; flex: 1 1 260px">
-                        <span class="input-group-text">{!! $searchIco !!}</span>
-                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar por artículo, código, laboratorio o lote…" aria-label="Buscar en liquidación 6 meses" id="tbl_buscar_liq6" />
-                      </div>
+                      
                       <div class="sac-legend" aria-label="Leyenda de días restantes">
                         <span><i class="is-bad"></i>Menos de 90 días</span>
                         <span><i class="is-warn"></i>90 a 180 días</span>
                         <span><i class="is-info"></i>Más de 180 días</span>
                       </div>
-                      <label class="d-flex align-items-center gap-2 ms-auto sac-muted">Mostrar
+                      <div class="input-group ms-auto" style="max-width: 340px; flex: 0 1 340px">
+                        <span class="input-group-text">{!! $searchIco !!}</span>
+                        <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar por artículo, código, laboratorio o lote…" aria-label="Buscar en liquidación 6 meses" id="tbl_buscar_liq6" />
+                      </div>
+                      <label class="d-flex align-items-center gap-2 sac-muted">Mostrar
                         <select class="form-select form-select-sm" style="width: auto" id="tbl_select_liq6">
                           @foreach ($filas as $v => $t)<option value="{{ $v }}" @if($v == 5) selected @endif>{{ $t }}</option>@endforeach
                         </select>

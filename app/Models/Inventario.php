@@ -63,17 +63,6 @@ class Inventario extends Model
         $listaArticulos = Inventario::with('cuarentena')->whereIn('ARTICULO',$ArticuloCache)->get();
         $Info_Articulo = Productos::whereIn('product_sku', $ArticuloCache)->get();
 
-        // Próximo vencimiento por artículo (lotes con existencia en bodegas 002 y 005), en una sola consulta.
-        try {
-            $ProxVencimiento = Lotes::whereIn('ARTICULO', $ArticuloCache)
-                ->whereIn('BODEGA', ['002', '005'])
-                ->where('CANT_DISPONIBLE', '>', 0)
-                ->groupBy('ARTICULO')
-                ->selectRaw('ARTICULO, MIN(FECHA_VENCIMIENTO) AS PROX_VENC')
-                ->pluck('PROX_VENC', 'ARTICULO');
-        } catch (\Throwable $e) {
-            $ProxVencimiento = collect();
-        }
 
         foreach($listaArticulos as $item){
 
@@ -109,7 +98,6 @@ class Inventario extends Model
 
             $json[$i]['IMG_URL'] = $imgUrl;
             $json[$i]['cuarentena'] = $item->cuarentena;
-            $json[$i]['PROX_VENC'] = isset($ProxVencimiento[$item->ARTICULO]) ? date('Y-m-d', strtotime($ProxVencimiento[$item->ARTICULO])) : null;
 
             $i++;
         }

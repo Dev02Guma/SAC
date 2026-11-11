@@ -43,7 +43,7 @@
     <link href="{{ asset('js/theme_gumadesk/vendors/fullcalendar/main.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('js/theme_gumadesk/vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet" >
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap" rel="stylesheet">
     <link href="{{ asset('js/theme_gumadesk/vendors/overlayscrollbars/OverlayScrollbars.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('css/theme_gumadesk/css/theme-rtl.min.css') }}" rel="stylesheet" id="style-rtl">
     <link href="{{ asset('css/theme_gumadesk/css/theme.min.css') }}" rel="stylesheet" id="style-default">
@@ -52,7 +52,7 @@
     <link href="{{ asset('js/theme_gumadesk/vendors/choices/choices.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('css/jquery.dataTables.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
-    <link href="{{ asset('css/sac-ui.css') }}?v=22" rel="stylesheet">
+    <link href="{{ asset('css/sac-ui.css') }}?v=31" rel="stylesheet">
     
     <script>
         var linkRTL = document.getElementById('style-rtl');

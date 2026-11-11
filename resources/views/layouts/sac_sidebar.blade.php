@@ -28,6 +28,12 @@
 @endphp
 
 <aside class="sac-side" id="sacSide" aria-label="Navegación principal">
+    <svg class="sac-waves" viewBox="0 0 300 190" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0 190 L0 140 C 80 118, 170 86, 300 52 L300 190 Z" fill="#3446b3" opacity=".55"></path>
+        <path d="M0 122 C 82 100, 172 66, 300 30" fill="none" stroke="#29b6e8" stroke-width="4"></path>
+        <path d="M0 108 C 84 86, 174 52, 300 16" fill="none" stroke="#ffffff" stroke-width="1.6" opacity=".9"></path>
+        <path d="M110 190 C 170 160, 236 146, 300 140" fill="none" stroke="#ffffff" stroke-width="1.2" opacity=".35"></path>
+    </svg>
     <a class="sac-brand" href="{{ $homeUrl }}" aria-label="SAC Unimark · inicio">
         <img class="sac-brand-full" src="{{ asset('images/logo-20-white.png') }}" alt="Unimark 20 años · Supliendo Salud" width="196" height="54">
         <img class="sac-brand-iso" src="{{ asset('images/logo-20-iso-white.png') }}" alt="Unimark 20 años" width="44" height="44">
@@ -50,7 +56,7 @@
         <div class="sac-navsec"><span class="sac-lbl">Administración</span></div>
         <nav class="sac-nav" aria-label="Administración">
             <a class="sac-ni {{ request()->routeIs('ArticuloFavorito') ? 'on' : '' }}" href="{{ route('ArticuloFavorito') }}" title="Art. favoritos">{!! $svg('fav') !!}<span class="sac-lbl">Art. favoritos</span></a>
-            <a class="sac-ni {{ request()->routeIs('CalendarPromocion') ? 'on' : '' }}" href="{{ route('CalendarPromocion') }}" title="Calendario promociones">{!! $svg('cal') !!}<span class="sac-lbl">Calendario promociones</span></a>
+            <!-- <a class="sac-ni {{ request()->routeIs('CalendarPromocion') ? 'on' : '' }}" href="{{ route('CalendarPromocion') }}" title="Calendario promociones">{!! $svg('cal') !!}<span class="sac-lbl">Calendario promociones</span></a> -->
             <a class="sac-ni {{ request()->routeIs('Usuarios') ? 'on' : '' }}" href="{{ route('Usuarios') }}" title="Usuarios">{!! $svg('users') !!}<span class="sac-lbl">Usuarios</span></a>
             <a class="sac-ni {{ request()->routeIs('monitoring') ? 'on' : '' }}" href="{{ route('monitoring') }}" title="Monitoreo">{!! $svg('monitor') !!}<span class="sac-lbl">Monitoreo</span></a>
         </nav>

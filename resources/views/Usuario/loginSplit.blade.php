@@ -7,6 +7,12 @@
     <svg class="sac-ico-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
   </button>
   <section class="sac-login-brand" aria-label="Unimark SAC">
+    <svg class="sac-waves" viewBox="0 0 300 190" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <path d="M0 190 L0 140 C 80 118, 170 86, 300 52 L300 190 Z" fill="#3446b3" opacity=".55"></path>
+        <path d="M0 122 C 82 100, 172 66, 300 30" fill="none" stroke="#29b6e8" stroke-width="4"></path>
+        <path d="M0 108 C 84 86, 174 52, 300 16" fill="none" stroke="#ffffff" stroke-width="1.6" opacity=".9"></path>
+        <path d="M110 190 C 170 160, 236 146, 300 140" fill="none" stroke="#ffffff" stroke-width="1.2" opacity=".35"></path>
+    </svg>
     <div class="sac-login-logo">
       <img src="{{ asset('images/logo-20-white.png') }}" alt="Unimark 20 años · Supliendo Salud" width="300" height="83">
       <span class="sac-login-app">SAC · Servicio de Atención al Cliente</span>
@@ -22,7 +28,7 @@
       </div>
     </div>
 
-    <div style="font-size: 12.5px; color: #64748B">© {{ date('Y') }} Unimark S.A. · Informática</div>
+    <div style="font-size: 12.5px">© {{ date('Y') }} Unimark S.A. · Supliendo salud desde hace 20 años</div>
   </section>
 
   <section class="sac-login-form" aria-label="Iniciar sesión">

@@ -23,7 +23,7 @@
       <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
         @if( Session::get('rol') == '1' || Session::get('rol') == '2')
           <a class="dropdown-item" href="{{ route('ArticuloFavorito') }}">Art. favoritos</a>
-          <a class="dropdown-item" href="{{ route('CalendarPromocion') }}">Calendario de promociones</a>
+          <!-- <a class="dropdown-item" href="{{ route('CalendarPromocion') }}">Calendario de promociones</a> -->
           <a class="dropdown-item" href="{{ route('Usuarios') }}">Usuarios</a>
           <a class="dropdown-item" href="{{ route('monitoring') }}">Monitoreo</a>
           <div class="dropdown-divider"></div>
