@@ -4,8 +4,63 @@
     var USR = window.SAC_USUARIOS || [], RUTAS = (window.SAC_RUTAS || []).slice();
     var porId = {}; USR.forEach(function (u) { porId[u.id] = u; });
     var $id = function (x) { return document.getElementById(x); };
-    var esc = function (v) { return $('<div>').text(v == null ? '' : String(v)).html(); };
+    // Escapa igual que la salida escapada de Blade (htmlspecialchars con ENT_QUOTES): válido en texto y en atributos
+    var esc = function (v) { return $('<div>').text(v == null ? '' : String(v)).html().replace(/"/g, '&quot;').replace(/'/g, '&#039;'); };
     var TOKEN = "{{ csrf_token() }}";
+
+    // ---------- Reglas de presentación (espejo de Usuario/Home.blade.php) ----------
+    var ROLES = { '1': 'Admin', '2': 'SAC Sup.', '9': 'SAC', '10': 'Normal', '11': 'Schedule', '12': 'Devolución', '13': 'Supervisor', '14': 'Controlados' };
+    function grupoRol(id) {
+      id = String(id);
+      if (id === '1') return 'admin';
+      if (id === '2' || id === '9') return 'sac';
+      if (id === '13') return 'sup';
+      return 'otros';
+    }
+    function nombreRol(id) {
+      id = String(id);
+      if (ROLES[id]) return ROLES[id];
+      // Roles fuera del mapa: el <select> del modal ya trae el nombre calculado por Blade
+      var opts = document.querySelectorAll('#sacURol option');
+      for (var i = 0; i < opts.length; i++) { if (opts[i].value === id) return opts[i].textContent.trim(); }
+      return 'Sin rol';
+    }
+    // "SAC02 | REYNA ALVAREZ" -> "Reyna Alvarez"
+    function titulo(t) {
+      t = String(t == null ? '' : t).trim();
+      if (t.indexOf('|') > -1) {
+        var partes = t.split('|').map(function (s) { return s.trim(); }).filter(Boolean);
+        if (partes.length) t = partes[partes.length - 1];
+      }
+      return t.toLowerCase().replace(/(^|[^\p{L}\p{M}'’.:])(\p{L})/gu, function (m, a, b) { return a + b.toUpperCase(); });
+    }
+    function iniciales(t) {
+      var p = String(t == null ? '' : t).replace(/[^\p{L}\s]/gu, ' ').trim().split(/\s+/).filter(Boolean);
+      var primera = function (s) { return s ? Array.from(s)[0] : ''; };
+      return ((p[0] ? primera(p[0]) : '?') + primera(p[1])).toUpperCase() || '?';
+    }
+    var ICO_DEL = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M10 11v6M14 11v6"></path></svg>';
+    // Marcado de una fila, idéntico al bucle de filas de la vista (solo se usa con permisos de administración)
+    function filaHtml(u) {
+      var rutas = u.rutas || [], on = u.activo === 'S';
+      var buscar = (u.nombre + ' ' + u.username + ' ' + u.rol + ' ' + rutas.join(' ')).toLowerCase();
+      var celdaRutas = rutas.length
+        ? '<div class="sac-chips">' + rutas.slice(0, 10).map(function (r) { return '<span class="sac-chip-r">' + esc(r) + '</span>'; }).join('') +
+          (rutas.length > 10 ? ' <span class="sac-chip-r is-more">+' + (rutas.length - 10) + ' más</span>' : '') + '</div>'
+        : '<span class="sac-muted">Sin rutas asignadas</span>';
+      return '<tr data-usr-id="' + esc(u.id) + '" data-grupo="' + esc(u.grupo) + '"' + (on ? '' : ' class="sac-usr-off" title="Usuario inactivo"') + ' data-buscar="' + esc(buscar) + '">' +
+        '<td><span class="sac-avatar">' + esc(u.ini) + '<i class="sac-avatar-dot ' + (on ? 'is-ok' : 'is-off') + '" aria-hidden="true"></i></span></td>' +
+        '<td><span class="sac-cli-name d-block">' + esc(u.nombre) + '</span> <span class="sac-cli-sub">' + esc(u.username) + '</span></td>' +
+        '<td><div class="d-flex flex-column align-items-start gap-1"><span class="sac-tag sac-rol-' + esc(u.grupo) + '">' + esc(u.rol) + '</span></div></td>' +
+        '<td>' + celdaRutas + '</td>' +
+        '<td class="text-end"><div class="d-inline-flex gap-2">' +
+          '<button type="button" class="btn btn-sm btn-falcon-default" data-usr-edit="' + esc(u.id) + '">Editar</button> ' +
+          '<button type="button" class="sac-ib sac-ib-danger" data-usr-del="' + esc(u.id) + '" aria-label="Eliminar a ' + esc(u.nombre) + '" title="Eliminar">' + ICO_DEL + '</button>' +
+        '</div></td></tr>';
+    }
+    function crearFila(u) { var tb = document.createElement('tbody'); tb.innerHTML = filaHtml(u); return tb.firstElementChild; }
+    function filaDe(id) { return document.querySelector('#tbl_usuarios tbody tr[data-usr-id="' + String(id).replace(/["\\]/g, '\\$&') + '"]'); }
+    function toast(t) { Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: t, showConfirmButton: false, timer: 2200 }); }
 
     // ---------- Tabla: filtro por rol + búsqueda ----------
     var filtro = 'todos';
@@ -16,6 +71,18 @@
         tr.hidden = !ok; if (ok) visibles++;
       });
       $id('sacUsrVacio').hidden = visibles > 0;
+    }
+    // Contadores de los filtros + subtítulo, y vuelve a aplicar filtro y búsqueda activos
+    function refrescarLista() {
+      var n = { todos: USR.length, admin: 0, sac: 0, sup: 0, otros: 0 };
+      USR.forEach(function (u) { if (n[u.grupo] != null) n[u.grupo]++; });
+      document.querySelectorAll('[data-usr-f]').forEach(function (b) {
+        var s = b.querySelector('.sac-n'), k = b.getAttribute('data-usr-f');
+        if (s && n[k] != null) s.textContent = n[k];
+      });
+      var sub = document.querySelector('.sac-head .sac-sub');
+      if (sub) sub.textContent = USR.length + ' usuarios · roles y rutas asignadas';
+      aplicarFiltro();
     }
     $id('sacUsrBuscar').addEventListener('input', aplicarFiltro);
     document.querySelectorAll('[data-usr-f]').forEach(function (b) {
@@ -114,8 +181,12 @@
       modal.show();
     }
     modalEl.addEventListener('shown.bs.modal', function () { $id('sacUNombre').focus(); });
-    document.querySelectorAll('[data-usr-edit]').forEach(function (b) {
-      b.addEventListener('click', function () { abrirModal(porId[b.getAttribute('data-usr-edit')]); });
+    // Delegación: sirve también para filas creadas o reemplazadas sin recargar
+    $id('tbl_usuarios').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-usr-edit], [data-usr-del]');
+      if (!b) return;
+      if (b.hasAttribute('data-usr-edit')) abrirModal(porId[b.getAttribute('data-usr-edit')]);
+      else eliminar(porId[b.getAttribute('data-usr-del')]);
     });
     var nuevo = $id('sacUsrNuevo'); if (nuevo) nuevo.addEventListener('click', function () { abrirModal(null); });
 
@@ -132,18 +203,62 @@
       if (p1 !== p2) { $id('sacUPass2').focus(); return error('Las contraseñas no coinciden.'); }
 
       var btn = $id('sacUGuardar'), txt = btn.textContent;
+      var editado = actual, activo = $id('sacUActivo').checked ? 'S' : 'N', rutas = sel.slice();
       btn.disabled = true; btn.textContent = 'Guardando…';
       $.ajax({
         url: 'SaveUsuario', type: 'post', dataType: 'json',
-        data: { _token: TOKEN, Estado: actual ? actual.id : 0, nombre: nombre, usuario: user, id_rol: rol,
-                activo: $id('sacUActivo').checked ? 'S' : 'N', passwprd: p1, rutas_enviadas: 1, rutas: sel }
+        data: { _token: TOKEN, Estado: editado ? editado.id : 0, nombre: nombre, usuario: user, id_rol: rol,
+                activo: activo, passwprd: p1, rutas_enviadas: 1, rutas: rutas }
       }).done(function (r) {
-        if (r && r.ok) { modal.hide(); Swal.fire({ icon: 'success', title: actual ? 'Usuario actualizado' : 'Usuario creado', timer: 1300, showConfirmButton: false }).then(function () { location.reload(); }); }
-        else error((r && r.mensaje) || 'No se pudo guardar el usuario.');
+        if (!r || !r.ok) return error((r && r.mensaje) || 'No se pudo guardar el usuario.');
+        var id = editado ? editado.id : r.id;
+        if (id == null || id === '') { location.reload(); return; } // respaldo: el backend no devolvió el id
+        aplicarGuardado(editado, { id: id, nombre: nombre, username: user, id_rol: rol, activo: activo, rutas: rutas });
+        modal.hide();
+        toast(editado ? 'Usuario actualizado' : 'Usuario creado');
       }).fail(function (x) {
         error((x.responseJSON && x.responseJSON.mensaje) || (x.status === 419 ? 'La sesión expiró. Recarga la página.' : 'No se pudo guardar el usuario.'));
       }).always(function () { btn.disabled = false; btn.textContent = txt; });
     });
+
+    // Actualiza USR/porId (= window.SAC_USUARIOS) y la fila de la tabla tras guardar
+    function aplicarGuardado(previo, d) {
+      var nom = titulo(d.nombre), rol = String(d.id_rol);
+      var u = previo || {};
+      u.id = d.id; u.nombre = nom; u.username = d.username; u.id_rol = rol; u.rol = nombreRol(rol);
+      u.grupo = grupoRol(rol); u.activo = d.activo === 'N' ? 'N' : 'S'; u.ini = iniciales(nom); u.rutas = d.rutas.slice();
+      if (!previo) USR.push(u);
+      porId[u.id] = u;
+      window.SAC_USUARIOS = USR;
+
+      var tr = crearFila(u), viejo = filaDe(u.id), tbody = document.querySelector('#tbl_usuarios tbody');
+      if (viejo) viejo.parentNode.replaceChild(tr, viejo);
+      else {
+        // Nuevo: insertar en orden alfabético por nombre
+        var antes = null, filas = tbody.querySelectorAll('tr');
+        for (var i = 0; i < filas.length; i++) {
+          var o = porId[filas[i].getAttribute('data-usr-id')];
+          if (o && o !== u && o.nombre.localeCompare(u.nombre, 'es', { sensitivity: 'base' }) > 0) { antes = filas[i]; break; }
+        }
+        tbody.insertBefore(tr, antes);
+      }
+      refrescarLista();
+    }
+
+    // Quita al usuario de los datos y su fila de la tabla tras eliminar
+    function quitarUsuario(u) {
+      var i = USR.indexOf(u);
+      if (i > -1) USR.splice(i, 1);
+      delete porId[u.id];
+      window.SAC_USUARIOS = USR;
+      if (actual === u) actual = null;
+      var tr = filaDe(u.id);
+      var reducir = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!tr || reducir) { if (tr) tr.remove(); refrescarLista(); return; }
+      tr.style.transition = 'opacity .2s ease';
+      tr.style.opacity = '0';
+      setTimeout(function () { tr.remove(); refrescarLista(); }, 200);
+    }
 
     // ---------- Eliminar ----------
     function eliminar(u) {
@@ -159,11 +274,10 @@
             .catch(function (x) { Swal.showValidationMessage((x && x.responseJSON && x.responseJSON.mensaje) || x.message || 'No se pudo eliminar.'); });
         },
         allowOutsideClick: function () { return !Swal.isLoading(); }
-      }).then(function (res) { if (res.isConfirmed) location.reload(); });
+      }).then(function (res) {
+        if (res.isConfirmed && res.value && res.value.ok) { quitarUsuario(u); toast('Usuario eliminado'); }
+      });
     }
     $id('sacUEliminar').addEventListener('click', function () { var u = actual; modal.hide(); setTimeout(function () { eliminar(u); }, 250); });
-    document.querySelectorAll('[data-usr-del]').forEach(function (b) {
-      b.addEventListener('click', function () { eliminar(porId[b.getAttribute('data-usr-del')]); });
-    });
   })();
 </script>
