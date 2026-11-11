@@ -75,6 +75,7 @@
       <span class="sac-clock-date" id="sacClockDate"></span>
     </div>
 
+    <div class="sac-login-spacer" aria-hidden="true"></div>
     <footer class="sac-login-foot">
       <span class="sac-login-foot-app">@if (ENV('APP_VERSION'))v{{ ltrim(ENV('APP_VERSION'), 'vV') }} &bull; @endif SAC · Servicio de Atención al Cliente Unimark</span>
       Copyright &copy; {{ date('Y') }} Unimark S.A. Todos los derechos reservados.

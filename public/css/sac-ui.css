@@ -765,15 +765,18 @@ body.sac .sac-login-brand h1 { margin: 0; color: #fff; font-size: 40px; line-hei
 .sac-login-form { flex: 1 1 480px; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
 .sac-login-form form { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 18px; }
 /* Login: columna derecha con tarjeta, reloj y pie (como en Kuali) */
-body.sac .sac-login-form { flex-direction: column; justify-content: flex-start; gap: 0; padding: 68px 24px 20px; }
-body.sac .sac-login-form > form { margin-top: auto; }
+body.sac .sac-login-form { flex-direction: column; justify-content: flex-start; gap: 0; padding: 40px 24px 20px; }
+/* Espacio libre repartido 2,5:1 (arriba de la tarjeta : debajo del reloj) para que el bloque quede más abajo */
+body.sac .sac-login-form::before { content: ""; flex: 2.5 1 0; min-height: 24px; }
+.sac-login-spacer { flex: 1 1 0; min-height: 32px; }
+body.sac .sac-login-form > form { margin-top: 0; }
 .sac-login-help { margin: 0; font-size: 13px; color: var(--sac-muted); text-align: center; }
 .sac-clock { width: 100%; max-width: 440px; margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--sac-border); text-align: center; }
 .sac-clock-time { display: block; font: 700 56px/1 var(--sac-font-num); letter-spacing: .02em; color: var(--sac-ink); font-variant-numeric: tabular-nums; }
 .sac-clock-date { display: block; margin-top: 6px; font-size: 14px; color: var(--sac-muted); }
-.sac-login-foot { margin-top: auto; padding-top: 32px; text-align: center; font-size: 11px; line-height: 1.5; color: var(--sac-faint); }
+.sac-login-foot { margin-top: 0; padding-top: 0; text-align: center; font-size: 11px; line-height: 1.5; color: var(--sac-faint); }
 .sac-login-foot-app { display: block; font-weight: 600; color: var(--sac-muted); margin-bottom: 2px; }
-@media (max-height: 760px) { .sac-clock-time { font-size: 42px; } .sac-clock { margin-top: 24px; padding-top: 14px; } body.sac .sac-login-form { padding-top: 40px; } }
+@media (max-height: 760px) { .sac-clock-time { font-size: 42px; } .sac-clock { margin-top: 24px; padding-top: 14px; } body.sac .sac-login-form::before { flex-grow: 1; } }
 
 /* Formulario dentro de una tarjeta sobre fondo bruma (más contraste) */
 .sac-login-form { background: var(--sac-bg); }

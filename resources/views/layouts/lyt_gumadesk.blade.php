@@ -52,7 +52,7 @@
     <link href="{{ asset('js/theme_gumadesk/vendors/choices/choices.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('css/jquery.dataTables.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
-    <link href="{{ asset('css/sac-ui.css') }}?v=39" rel="stylesheet">
+    <link href="{{ asset('css/sac-ui.css') }}?v=41" rel="stylesheet">
     
     <script>
         var linkRTL = document.getElementById('style-rtl');
