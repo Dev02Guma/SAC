@@ -509,8 +509,8 @@
                   <div class="tab-pane {{$SAC}}" id="crm-pedido" role="tabpanel" aria-labelledby="crm-pedido-tab">
                     <div class="sac-toolbar">
                       <div class="nav-tabs m-0" role="group" aria-label="Filtrar por estado">
-                        <button type="button" class="nav-link active" data-ped-f="todos" aria-pressed="true">Todos <span class="sac-n" id="sac_ped_n_todos">0</span></button>
-                        <button type="button" class="nav-link" data-ped-f="pend" aria-pressed="false">Pendientes <span class="sac-n" id="sac_ped_n_pend">0</span></button>
+                        <button type="button" class="nav-link active" data-ped-f="pend" aria-pressed="true">Pendientes <span class="sac-n" id="sac_ped_n_pend">0</span></button>
+                        <button type="button" class="nav-link" data-ped-f="todos" aria-pressed="false">Todos <span class="sac-n" id="sac_ped_n_todos">0</span></button>
                         <button type="button" class="nav-link" data-ped-f="proc" aria-pressed="false">Procesados <span class="sac-n" id="sac_ped_n_proc">0</span></button>
                         <button type="button" class="nav-link" data-ped-f="canc" aria-pressed="false">Cancelados <span class="sac-n" id="sac_ped_n_canc">0</span></button>
                       </div>
@@ -588,7 +588,7 @@
                         <span class="input-group-text">{!! $searchIco !!}</span>
                         <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar por artículo, código, laboratorio o lote…" aria-label="Buscar en liquidación 6 meses" id="tbl_buscar_liq6" />
                       </div>
-                      <label class="d-flex align-items-center gap-2 sac-muted">Mostrar
+                      <label class="d-flex align-items-center gap-2 sac-muted">
                         <select class="form-select form-select-sm" style="width: auto" id="tbl_select_liq6">
                           @foreach ($filas as $v => $t)<option value="{{ $v }}" @if($v == 5) selected @endif>{{ $t }}</option>@endforeach
                         </select>

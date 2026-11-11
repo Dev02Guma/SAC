@@ -73,16 +73,16 @@
 
         <section class="card" style="overflow: hidden" aria-label="Lista de usuarios">
           <div class="sac-toolbar">
-            <div class="input-group" style="max-width: 340px; flex: 1 1 240px">
-              <span class="input-group-text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
-              <input class="form-control form-control-sm shadow-none" type="search" id="sacUsrBuscar" placeholder="Buscar por nombre, usuario o ruta…" aria-label="Buscar usuarios">
-            </div>
             <div class="nav-tabs m-0" role="group" aria-label="Filtrar por rol">
               <button type="button" class="nav-link active" data-usr-f="todos" aria-pressed="true">Todos <span class="sac-n">{{ $conteo['todos'] }}</span></button>
               <button type="button" class="nav-link" data-usr-f="admin" aria-pressed="false">Admin <span class="sac-n">{{ $conteo['admin'] }}</span></button>
               <button type="button" class="nav-link" data-usr-f="sac" aria-pressed="false">SAC <span class="sac-n">{{ $conteo['sac'] }}</span></button>
               <button type="button" class="nav-link" data-usr-f="sup" aria-pressed="false">Supervisores <span class="sac-n">{{ $conteo['sup'] }}</span></button>
               <button type="button" class="nav-link" data-usr-f="otros" aria-pressed="false">Otros <span class="sac-n">{{ $conteo['otros'] }}</span></button>
+            </div>
+            <div class="input-group ms-auto" style="max-width: 340px; flex: 0 1 340px">
+              <span class="input-group-text"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"></circle><path d="m21 21-4.3-4.3"></path></svg></span>
+              <input class="form-control form-control-sm shadow-none" type="search" id="sacUsrBuscar" placeholder="Buscar por nombre, usuario o ruta…" aria-label="Buscar usuarios">
             </div>
           </div>
 
@@ -99,7 +99,7 @@
               </thead>
               <tbody>
                 @foreach ($datosUsuarios as $u)
-                  <tr data-usr-id="{{ $u['id'] }}" data-grupo="{{ $u['grupo'] }}" data-buscar="{{ mb_strtolower($u['nombre'] . ' ' . $u['username'] . ' ' . $u['rol'] . ' ' . $u['rutas']->implode(' ')) }}">
+                  <tr data-usr-id="{{ $u['id'] }}" data-grupo="{{ $u['grupo'] }}" @if ($u['activo'] !== 'S') class="sac-usr-off" title="Usuario inactivo" @endif data-buscar="{{ mb_strtolower($u['nombre'] . ' ' . $u['username'] . ' ' . $u['rol'] . ' ' . $u['rutas']->implode(' ')) }}">
                     <td><span class="sac-avatar">{{ $u['ini'] }}<i class="sac-avatar-dot {{ $u['activo'] === 'S' ? 'is-ok' : 'is-off' }}" aria-hidden="true"></i></span></td>
                     <td>
                       <span class="sac-cli-name d-block">{{ $u['nombre'] }}</span>
@@ -108,7 +108,6 @@
                     <td>
                       <div class="d-flex flex-column align-items-start gap-1">
                         <span class="sac-tag sac-rol-{{ $u['grupo'] }}">{{ $u['rol'] }}</span>
-                        @if ($u['activo'] !== 'S')<span class="sac-tag sac-tag-neutral">Inactivo</span>@endif
                       </div>
                     </td>
                     <td>
@@ -159,7 +158,8 @@
         </button>
       </div>
 
-      <div class="modal-body sac-pform">
+      <div class="modal-body sac-umodal-body">
+       <div class="sac-ucol sac-pform">
         <p class="sac-sec">Datos del usuario</p>
         <div class="sac-pf-row3">
           <div class="sac-pf">
@@ -202,7 +202,9 @@
         </div>
         <span class="sac-hint" id="sacUPassHint">Mínimo 8 caracteres.</span>
 
-        <hr class="sac-hr">
+       </div>
+       <div class="sac-ucol sac-ucol-rutas sac-pform">
+        <p class="sac-sec">Rutas</p>
         <div class="d-flex align-items-start justify-content-between gap-2 flex-wrap">
           <div>
             <span class="sac-rt-title" id="sacURutasLbl">Rutas que puede trabajar</span>
@@ -229,7 +231,8 @@
           </div>
         </div>
 
-        <p class="sac-err mb-0" id="sacUErr" role="alert" hidden></p>
+       </div>
+        <p class="sac-err mb-0 sac-uerr" id="sacUErr" role="alert" hidden></p>
       </div>
 
       <div class="modal-footer sac-umodal-foot">

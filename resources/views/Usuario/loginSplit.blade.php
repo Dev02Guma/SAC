@@ -28,14 +28,14 @@
       </div>
     </div>
 
-    <div style="font-size: 12.5px">© {{ date('Y') }} Unimark S.A. · Supliendo salud desde hace 20 años</div>
+    <div style="font-size: 12.5px">Supliendo salud desde hace 20 años</div>
   </section>
 
-  <section class="sac-login-form" aria-label="Iniciar sesión">
-    <form method="POST" action="{{ route('login') }}" novalidate>
+  <section class="sac-login-form " aria-label="Iniciar sesión">
+    <form class="sac-login-card mt-7" method="POST" action="{{ route('login') }}" novalidate>
       @csrf
       <div>
-        <h2 style="margin: 0; font-size: 28px; font-weight: 650; letter-spacing: -0.022em">Iniciar sesión</h2>
+        <h2 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.022em">Iniciar sesión</h2>
         <p style="margin: 6px 0 0; font-size: 14.5px; color: #64748B">Bienvenido de nuevo. Ingresa con tu usuario.</p>
       </div>
 
@@ -66,17 +66,40 @@
 
       <button class="sac-go" type="submit" name="submit">Entrar</button>
 
-      <p style="margin: 0; font-size: 13px; color: #64748B; text-align: center">
-        ¿Problemas para ingresar? Contacta a soporte de TI.
-        @if (ENV('APP_VERSION'))<br><span style="font-size: 12px">Versión {{ ENV('APP_VERSION') }}</span>@endif
-      </p>
+      <p class="sac-login-help">¿Problemas para ingresar? Contacta a soporte de TI.</p>
     </form>
+
+    {{-- Reloj (hora y fecha actuales) --}}
+    <div class="sac-clock" aria-live="off">
+      <time class="sac-clock-time" id="sacClockTime">--:--</time>
+      <span class="sac-clock-date" id="sacClockDate"></span>
+    </div>
+
+    <footer class="sac-login-foot">
+      <span class="sac-login-foot-app">@if (ENV('APP_VERSION'))v{{ ltrim(ENV('APP_VERSION'), 'vV') }} &bull; @endif SAC · Servicio de Atención al Cliente Unimark</span>
+      Copyright &copy; {{ date('Y') }} Unimark S.A. Todos los derechos reservados.
+    </footer>
   </section>
 </main>
 @endsection
 
 @section('metodosjs')
 <script>
+  // Reloj: hora (24 h) y fecha en español, se actualiza cada segundo
+  (function () {
+    var hEl = document.getElementById('sacClockTime'), dEl = document.getElementById('sacClockDate');
+    if (!hEl) return;
+    function tick() {
+      var now = new Date();
+      hEl.textContent = now.toLocaleTimeString('es-NI', { hour: '2-digit', minute: '2-digit', hour12: false });
+      hEl.setAttribute('datetime', now.toISOString());
+      var f = now.toLocaleDateString('es-NI', { weekday: 'long', day: 'numeric', month: 'long' });
+      dEl.textContent = f.charAt(0).toUpperCase() + f.slice(1);
+    }
+    tick();
+    setInterval(tick, 1000);
+  })();
+
   (function () {
     var btn = document.getElementById('sacTogglePw');
     var pw = document.getElementById('password');

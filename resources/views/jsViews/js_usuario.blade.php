@@ -54,9 +54,9 @@
       $id('sacURtTotal').textContent = RUTAS.length + ' rutas';
       $id('sacURtList').innerHTML = lista.length ? lista.map(function (r) {
         var on = sel.indexOf(r) > -1, otros = otrosCon(r);
-        var txt = otros.length ? 'También: ' + otros.slice(0, 3).join(', ') + (otros.length > 3 ? ' +' + (otros.length - 3) : '') : 'Sin asignar';
+        var txt = otros.length ? 'También: ' + otros.slice(0, 4).join(', ') + (otros.length > 4 ? ' +' + (otros.length - 4) + ' más' : '') : 'Sin asignar';
         return '<li role="option" aria-selected="' + on + '" class="' + (on ? 'is-on' : '') + '" data-rt="' + esc(r) + '" tabindex="-1">' +
-          '<span class="sac-rt-check" aria-hidden="true"></span><strong>' + esc(r) + '</strong><span class="sac-rt-otros">' + esc(txt) + '</span></li>';
+          '<span class="sac-rt-check" aria-hidden="true"></span><strong>' + esc(r) + '</strong><span class="sac-rt-otros"' + (otros.length ? ' title="' + esc('También la tienen: ' + otros.join(', ')) + '"' : '') + '>' + esc(txt) + '</span></li>';
       }).join('') : '<li class="sac-rt-none">No hay rutas que coincidan</li>';
     }
     function toggleRuta(r) {

@@ -65,7 +65,7 @@
 
     
     // ===== Pedidos (nueva UI) ========================================================
-    var sacPed = { f: 'todos', ruta: '' };
+    var sacPed = { f: 'pend', ruta: '' }; // al abrir se muestran primero los pendientes
     var SAC_PED_ST = {
         PENDIENTE: { key: 'pend', label: 'Pendiente', cls: 'is-pend' },
         PROCESADO: { key: 'proc', label: 'Procesado', cls: 'is-proc' },
@@ -135,9 +135,9 @@
             '<div class="sac-ped-ln is-head"><span>Artículo (' + lineas.length + ')</span><span class="text-end">Cantidad</span><span class="text-end">Bonificado</span><span class="text-end">Valor</span></div>' +
             filas +
             '<div class="sac-ped-dfoot">' +
-              (nota ? '<p class="sac-ped-nota"><strong>Nota:</strong> ' + sacEsc(nota) + '</p>' : '<span></span>') +
+              (nota ? '<div class="sac-ped-nota" role="note"><span class="sac-ped-nota-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"></path><path d="M8 10h8M8 14h5"></path></svg></span><div><strong>Nota</strong><p>' + sacEsc(nota) + '</p></div></div>' : '<span></span>') +
               (pend ? '<div class="sac-ped-acts"><button type="button" class="btn btn-sm btn-falcon-danger" onclick="ChancesStatus(' + parseInt(row.id, 10) + ',2)">Cancelar</button>' +
-                      '<button type="button" class="btn btn-sm btn-primary" onclick="ChancesStatus(' + parseInt(row.id, 10) + ',1)">Marcar procesado</button></div>' : '') +
+                      '<button type="button" class="btn btn-sm btn-primary" onclick="ChancesStatus(' + parseInt(row.id, 10) + ',1)">Procesar</button></div>' : '') +
             '</div></div>';
     }
     function sacPedToggle(tr, abrir) {
