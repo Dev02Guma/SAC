@@ -17,7 +17,8 @@
   --sac-ink-2: #26336B;
   --sac-ink-3: #3F4C6E;
   --sac-muted: #4A5878;
-  --sac-faint: #7F8AA6;
+  --sac-faint: #7F8AA6;       /* solo íconos/separadores: 3.4:1, no apto para texto */
+  --sac-placeholder: #667390;  /* texto de ayuda en campos: ≥4.5:1 */
   --sac-primary: #2B3B9E;     /* azul rey */
   --sac-primary-hover: #1B2766;
   --sac-primary-soft: #E9EDFA;
@@ -193,7 +194,7 @@ body.sac .form-control-sm, body.sac .form-select-sm { min-height: 36px; font-siz
 body.sac .form-control:focus, body.sac .form-select:focus {
   border-color: var(--sac-primary); box-shadow: 0 0 0 3px rgba(43,59,158,.18);
 }
-body.sac .form-control::placeholder { color: var(--sac-faint); }
+body.sac .form-control::placeholder, body.sac input::placeholder, body.sac textarea::placeholder { color: var(--sac-placeholder); opacity: 1; }
 body.sac .form-label { font-size: 13px; font-weight: 600; color: var(--sac-ink-2); margin-bottom: 6px; }
 body.sac .input-group-text { background: var(--sac-surface); border-color: var(--sac-input-border); border-radius: var(--sac-radius-sm); color: var(--sac-muted); }
 body.sac .search-box .search-input { padding-left: 2.25rem; }
@@ -542,7 +543,7 @@ body.sac .choices__item .sac-ch-cod {
 }
 body.sac .choices__item .sac-ch-nom { min-width: 0; color: var(--sac-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 body.sac .choices__list--single .choices__item { display: flex; align-items: center; gap: 10px; min-width: 0; }
-body.sac .sac-ch-ph { color: var(--sac-faint); }
+body.sac .sac-ch-ph { color: var(--sac-placeholder); }
 body.sac .choices__list--dropdown .choices__placeholder { display: none; }
 body.sac .choices__list--dropdown .has-no-results, body.sac .choices__list--dropdown .has-no-choices { color: var(--sac-muted); }
 
@@ -819,7 +820,7 @@ body.sac .sac-login-form > form { margin-top: 0; }
 .sac-clock { width: 100%; max-width: 440px; margin-top: 56px; padding-top: 22px; border-top: 1px solid var(--sac-border); text-align: center; }
 .sac-clock-time { display: block; font: 700 56px/1 var(--sac-font-num); letter-spacing: .02em; color: var(--sac-ink); font-variant-numeric: tabular-nums; }
 .sac-clock-date { display: block; margin-top: 6px; font-size: 14px; color: var(--sac-muted); }
-.sac-login-foot { margin-top: 0; padding-top: 0; text-align: center; font-size: 11px; line-height: 1.5; color: var(--sac-faint); }
+.sac-login-foot { margin-top: 0; padding-top: 0; text-align: center; font-size: 12px; line-height: 1.5; color: var(--sac-muted); }
 .sac-login-foot-app { display: block; font-weight: 600; color: var(--sac-muted); margin-bottom: 2px; }
 @media (max-height: 760px) { .sac-clock-time { font-size: 42px; } .sac-clock { margin-top: 24px; padding-top: 14px; } body.sac .sac-login-form::before { flex-grow: 1; } }
 
@@ -929,6 +930,25 @@ body.sac #tbl_usuarios tbody tr.sac-usr-off > td:not(:last-child) { opacity: .5;
 body.sac #tbl_inventario tbody tr.sac-inv-off > td { opacity: .5; }
 body.sac #tbl_inventario tbody tr.sac-inv-off .sac-thumb img { filter: grayscale(1); }
 
+/* Tablas: estado de error con "Reintentar" (window.sacTableError) */
+.sac-tblbox.has-error > .dataTables_wrapper, .sac-tblbox.has-error > table { display: none; }
+.sac-tbl-err {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  padding: 36px 16px; text-align: center; background: var(--sac-surface); color: var(--sac-ink);
+}
+.sac-tbl-err-ico {
+  display: inline-flex; align-items: center; justify-content: center; width: 52px; height: 52px;
+  border-radius: 50%; background: var(--sac-bad-soft); color: var(--sac-bad-ink);
+}
+.sac-tbl-err-msg { margin: 0; max-width: 36ch; font-size: 14px; font-weight: 600; color: var(--sac-ink); }
+.sac-tbl-err-hint { display: block; margin-top: 4px; font-size: 13px; font-weight: 400; color: var(--sac-muted); }
+.sac-tbl-err .btn { margin-top: 4px; min-width: 110px; }
+
+/* Fila vacía de DataTables ("No hay resultados que coincidan") */
+body.sac table.dataTable td.dataTables_empty { padding: 28px 16px !important; text-align: center; color: var(--sac-muted); font-size: 13.5px; background: var(--sac-surface); }
+/* En Pedidos el pie ya explica que no hay pedidos con el filtro: se oculta la fila vacía */
+body.sac #tbl_mst_pedido td.dataTables_empty { display: none; }
+
 /* ---------- Línea gráfica Unimark 20 años ---------- */
 body.sac .sac-h1 { font-weight: 800; letter-spacing: -0.025em; color: var(--sac-ink); }
 body.sac .sac-kv, body.sac .sac-promo-offer, .sac-fact-amt, .sac-ped-monto { font-family: var(--sac-font-num); letter-spacing: .01em; }
@@ -1002,6 +1022,7 @@ html[data-sac-theme="dark"] {
   --sac-ink-3: #A3AEC4;
   --sac-muted: #8F9BB3;
   --sac-faint: #6B7896;
+  --sac-placeholder: #8C98B4;
   --sac-primary: #5B6CE0;
   --sac-primary-hover: #4757C9;
   --sac-primary-soft: rgba(91,108,224,.18);

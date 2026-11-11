@@ -399,9 +399,13 @@
                 $("#id_loading").hide();
 
 
+            },
+            error: function () {
+                $("#id_loading").hide();
+                if (window.sacTableError) sacTableError('#tbl_mst_pedido', 'No se pudieron cargar los pedidos.', function () { RangeStat(Start, Ends); });
             }
         })
-        
+
     }
     
     $('#id_txt_buscar').on('keyup', function() {        
@@ -893,51 +897,69 @@
     });             
     function ChancesStatus(id_producto,Valor){
 
-        lblModal = (Valor ==1)? 'Procesar': 'Cancelar'
+        // Valor 1 = procesar, 2 = cancelar. Tras guardar se actualiza solo esa fila (sin recargar),
+        // conservando filtros, página y pedidos desplegados.
+        var procesar = parseInt(Valor, 10) === 1;
+        var toast = function (icon, title) {
+            Swal.fire({ toast: true, position: 'top-end', icon: icon, title: title, showConfirmButton: false, timer: icon === 'error' ? 2600 : 2200 });
+        };
 
         Swal.fire({
-            title: '¿Estas Seguro de '+lblModal+' el Pedido?',
-            text: "¡Esta acción no podrá ser revertida!",
+            title: procesar ? '¿Procesar este pedido?' : '¿Cancelar este pedido?',
+            text: 'Esta acción no se puede deshacer.',
             icon: 'warning',
             showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Si!',
-            target:"",
+            confirmButtonColor: procesar ? '#2B3B9E' : '#C42B3A',
+            cancelButtonColor: '#64748B',
+            confirmButtonText: procesar ? 'Sí, procesar' : 'Sí, cancelar',
+            cancelButtonText: 'Volver',
+            focusCancel: true,
             showLoaderOnConfirm: true,
-            preConfirm: () => {
-                $.ajax({
-                    url: "ChancesStatus",
-                    type: 'post',
-                    data: {
-                        id      : id_producto,
-                        Valor   : Valor,
-                        _token  : "{{ csrf_token() }}" 
-                    },
-                    async: true,
-                    success: function(response) {
-                        if(response.original){
-                        Swal.fire({
-                        title: 'Correcto',
-                        icon: 'success',
-                        showCancelButton: false,
-                        confirmButtonColor: '#3085d6',
-                        cancelButtonColor: '#d33',
-                        confirmButtonText: 'OK'
-                        }).then((result) => {
-                        if (result.isConfirmed) {
-                            location.reload();
-                            }
-                        })
-                    }
-                    },
-                    error: function(response) {
-                    }
-                }).done(function(data) {
-                    
+            preConfirm: function () {
+                return new Promise(function (resolve) {
+                    $.ajax({
+                        url: "ChancesStatus",
+                        type: 'post',
+                        dataType: 'json',
+                        data: {
+                            id      : id_producto,
+                            Valor   : Valor,
+                            _token  : "{{ csrf_token() }}"
+                        }
+                    }).done(function (response) {
+                        resolve({ ok: !!(response && response.original) });
+                    }).fail(function () {
+                        resolve({ ok: false });
+                    });
                 });
             },
-            allowOutsideClick: () => !Swal.isLoading()
+            allowOutsideClick: function () { return !Swal.isLoading(); }
+        }).then(function (result) {
+            if (!result.isConfirmed) return;
+            if (!result.value || !result.value.ok) {
+                toast('error', procesar ? 'No se pudo procesar el pedido' : 'No se pudo cancelar el pedido');
+                return;
+            }
+            if ($.fn.dataTable.isDataTable('#tbl_mst_pedido')) {
+                var api = $('#tbl_mst_pedido').DataTable();
+                var row = api.row(function (idx, data) { return String(data.id) === String(id_producto); });
+                var d = row.data();
+                if (d) {
+                    var abierto = row.child.isShown();
+                    d.ESTADO = procesar ? 'PROCESADO' : 'CANCELADO';
+                    d.COLOR  = procesar ? 'success' : 'info';
+                    row.data(d).invalidate();
+                    api.draw(false);
+                    // Si seguía desplegado (y visible con el filtro activo) se vuelve a pintar su detalle sin botones
+                    if (abierto) {
+                        var tr = row.node();
+                        if (tr && document.body.contains(tr)) sacPedToggle(tr, true);
+                        else { row.child.hide(); $(tr).removeClass('shown').find('.sac-ped-toggle').attr('aria-expanded', 'false'); }
+                    }
+                    sacPedCargados(api.rows().data().toArray());
+                }
+            }
+            toast('success', procesar ? 'Pedido procesado' : 'Pedido cancelado');
         });
     }
 
@@ -972,8 +994,12 @@
         //mostrarRequisado(num_orden, id_articulo, 2);
     });
 
+    // Carga inicial de Inventario, Liquidación (12 y 6 meses) y Clientes; se puede reintentar si falla
+    var SAC_GETDATA_TBLS = ['#tbl_inventario', '#tbl_inventario_liq_12', '#tbl_inventario_liq_6', '#tbl_mst_clientes'];
+    function sacCargarDatos() {
+    SAC_GETDATA_TBLS.forEach(function (sel) { if (window.sacTableLoading) sacTableLoading(sel, true); });
     $.ajax({
-        url: "getData",       
+        url: "getData",
         type: 'get',
         async: true,
         success: function(data) {
@@ -1007,11 +1033,18 @@
             $("#id_loading").hide();
         },
         error: function(response) {
-            //swal("Oops", "No se ha podido guardar!", "error");
+            $("#id_loading").hide();
+            var msgs = {
+                '#tbl_inventario': 'No se pudo cargar el inventario.',
+                '#tbl_inventario_liq_12': 'No se pudo cargar la liquidación a 12 meses.',
+                '#tbl_inventario_liq_6': 'No se pudo cargar la liquidación a 6 meses.',
+                '#tbl_mst_clientes': 'No se pudieron cargar los clientes.'
+            };
+            if (window.sacTableError) SAC_GETDATA_TBLS.forEach(function (sel) { sacTableError(sel, msgs[sel], sacCargarDatos); });
         }
-    }).done(function(data) {
-        //mostrarRequisado(num_orden, id_articulo, 2);
     });
+    }
+    sacCargarDatos();
 
 
     function Estadisticas(Data){
@@ -1049,7 +1082,7 @@
                 [5, "Todo"]
             ],
             "language": {
-                "zeroRecords": "NO HAY COINCIDENCIAS",
+                "zeroRecords": "No hay resultados que coincidan",
                 "paginate": {
                     "first": "Primera",
                     "last": "Última ",
@@ -1085,7 +1118,7 @@
                 [5, "Todo"]
             ],
             "language": {
-                "zeroRecords": "NO HAY COINCIDENCIAS",
+                "zeroRecords": "No hay resultados que coincidan",
                 "paginate": {
                     "first": "Primera",
                     "last": "Última ",
@@ -1472,7 +1505,18 @@
             $("#tbl_no_facturado_filter").hide();
 
             $('#tbl_historico_factura, #tbl_ultm_3m, #tbl_no_facturado').each(function () { $(this).DataTable().page.len(10).draw(); });
-            
+
+        }).fail(function () {
+            if (sacCliReq !== window.sacCliReq) return;
+            $('#lbl_nombre_cliente').text('No se pudo cargar el cliente');
+            $('#sac_cli_avatar_txt').text('—');
+            $('#id_load_cliente').hide();
+            var msgs = {
+                '#tbl_historico_factura': 'No se pudo cargar el histórico de facturas.',
+                '#tbl_ultm_3m': 'No se pudieron cargar las compras de los últimos 3 meses.',
+                '#tbl_no_facturado': 'No se pudieron cargar los artículos no facturados.'
+            };
+            if (window.sacTableError) Object.keys(msgs).forEach(function (sel) { sacTableError(sel, msgs[sel], function () { Modal_Cliente(Id); }); });
         })
 
         function setBarVentasMes(Data){

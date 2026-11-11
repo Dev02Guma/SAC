@@ -69,6 +69,7 @@
                 var box = table.closest('.sac-tblbox') || table.parentNode;
                 var skel = box.querySelector(':scope > .sac-skel');
                 if (on) {
+                    sacErrQuitar(box);
                     if (!skel) box.insertAdjacentHTML('afterbegin', SKEL);
                     box.classList.add('is-loading');
                     clearTimeout(timers[table.id]);
@@ -78,6 +79,41 @@
                     box.classList.remove('is-loading');
                     clearTimeout(timers[table.id]);
                 }
+            };
+
+            // Estado de error con "Reintentar" dentro del .sac-tblbox de la tabla (idempotente)
+            var ICO_ERR = '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                '<circle cx="12" cy="12" r="10"></circle><path d="M12 8v4"></path><path d="M12 16h.01"></path></svg>';
+            function sacErrQuitar(box) {
+                var err = box.querySelector(':scope > .sac-tbl-err');
+                if (err) err.remove();
+                box.classList.remove('has-error');
+            }
+            window.sacTableError = function (sel, mensaje, reintentar) {
+                var table = typeof sel === 'string' ? document.querySelector(sel) : sel;
+                if (!table) return;
+                window.sacTableLoading(table, false);
+                var box = table.closest('.sac-tblbox') || table.parentNode;
+                sacErrQuitar(box);
+                var div = document.createElement('div');
+                div.className = 'sac-tbl-err';
+                div.setAttribute('role', 'alert');
+                div.innerHTML = '<span class="sac-tbl-err-ico">' + ICO_ERR + '</span>' +
+                    '<p class="sac-tbl-err-msg"><span></span><span class="sac-tbl-err-hint">Revisa tu conexión e inténtalo de nuevo.</span></p>';
+                div.querySelector('.sac-tbl-err-msg > span').textContent = mensaje || 'No se pudieron cargar los datos.';
+                if (typeof reintentar === 'function') {
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-sm btn-falcon-default';
+                    btn.textContent = 'Reintentar';
+                    btn.addEventListener('click', function () {
+                        window.sacTableLoading(table, true);
+                        reintentar();
+                    });
+                    div.appendChild(btn);
+                }
+                box.insertBefore(div, box.firstChild);
+                box.classList.add('has-error');
             };
             // Toda tabla vacía dentro de .sac-tblbox arranca "cargando" hasta que DataTables la inicializa
             document.querySelectorAll('.sac-tblbox > table[id]').forEach(function (t) {
@@ -91,6 +127,8 @@
                     var vacio = $t.find('thead th').toArray().every(function (th) { return !jQuery.trim(jQuery(th).text()); });
                     $t.toggleClass('sac-thead-empty', vacio);
                     window.sacTableLoading(settings.nTable, false);
+                    var box = settings.nTable.closest('.sac-tblbox') || settings.nTable.parentNode;
+                    if (box) sacErrQuitar(box);
                 });
             }
         })();

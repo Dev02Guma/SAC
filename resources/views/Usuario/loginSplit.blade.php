@@ -36,7 +36,7 @@
       @csrf
       <div>
         <h2 style="margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -0.022em">Iniciar sesión</h2>
-        <p style="margin: 6px 0 0; font-size: 14.5px; color: #64748B">Bienvenido de nuevo. Ingresa con tu usuario.</p>
+        <p style="margin: 6px 0 0; font-size: 14.5px; color: var(--sac-muted)">Bienvenido de nuevo. Ingresa con tu usuario.</p>
       </div>
 
       <div class="sac-fld">
