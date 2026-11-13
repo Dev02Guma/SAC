@@ -823,7 +823,7 @@
                   {{-- Columna lateral --}}
                   <aside class="sac-mside">
                     <section class="card sac-side-card" aria-labelledby="sacMoraTitle">
-                      <div class="d-flex align-items-center justify-content-between mb-2">
+                      <div class="d-flex align-items-center justify-content-between mb-2 mt-3">
                         <h3 class="sac-card-title" id="sacMoraTitle">Saldos en mora</h3>
                         <span class="sac-muted sac-num" id="sac_mora_total">C$ 0.00</span>
                       </div>
@@ -839,7 +839,7 @@
                     </section>
 
                     <section class="card sac-side-card" aria-labelledby="sacContactoTitle">
-                      <h3 class="sac-card-title mb-2" id="sacContactoTitle">Contacto</h3>
+                      <h3 class="sac-card-title mb-2 mt-2" id="sacContactoTitle">Contacto</h3>
                       <dl class="sac-dl">
                         <dt>Teléfonos</dt><dd class="sac-num" id="sac_cli_tels">—</dd>
                         <dt>Dirección</dt><dd id="sac_cli_dir">—</dd>
