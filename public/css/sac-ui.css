@@ -557,6 +557,9 @@ body.sac table.sac-ped-tbl { table-layout: fixed; }
 body.sac .sac-wrap > * { min-width: 0; }
 body.sac table.sac-ped-tbl > tbody > tr > td { padding: 0 !important; border-bottom: 1px solid var(--sac-border-soft); }
 body.sac table.sac-ped-tbl > tbody > tr:not(.sac-ped-child) { cursor: pointer; }
+/* Abierto: la fila ya no cierra el detalle (solo la flecha), así se puede seleccionar texto */
+body.sac table.sac-ped-tbl > tbody > tr.shown { cursor: auto; }
+body.sac table.sac-ped-tbl > tbody > tr.shown .sac-ped-cli { user-select: text; cursor: text; }
 body.sac table.sac-ped-tbl > tbody > tr.shown { background: var(--sac-sel); }
 body.sac table.sac-ped-tbl > tbody > tr.shown > td { border-bottom-color: var(--sac-sel-border); }
 .sac-ped { display: flex; gap: 14px; align-items: flex-start; padding: 14px 20px; }
@@ -958,6 +961,13 @@ body.sac .sac-kv { font-size: 30px; font-weight: 700; line-height: 1.1; }
 body.sac .sac-modal .sac-kpis-4 .sac-kv { font-size: 21px; white-space: normal; overflow: visible; text-overflow: clip; overflow-wrap: anywhere; line-height: 1.15; }
 body.sac .sac-modal .sac-kpis-4 .sac-kpi { padding: 14px 14px; }
 body.sac .sac-modal .sac-fact-amt { font-size: 16px; }
+/* Productos facturados (modal de cliente) */
+.sac-pf-bar { row-gap: 10px; }
+body.sac .sac-range2-sm .sac-range .form-control { min-height: 34px; height: 34px; width: 140px; padding-left: 36px; font-size: 13px; }
+body.sac .sac-range2-sm .sac-range > svg { left: 12px; }
+.sac-pf-btn { height: 34px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; }
+.sac-pf-cant { min-width: 92px; text-align: right; font-size: 13px; line-height: 1.25; white-space: nowrap; }
+.sac-pf-cant strong { font-size: 15px; color: var(--sac-ink); }
 body.sac .sac-promo-offer { font-size: 34px; font-weight: 800; }
 .sac-ped-monto { font-size: 17px; font-weight: 700; }
 .sac-fact-amt { font-size: 18px; font-weight: 700; }

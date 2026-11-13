@@ -4,8 +4,9 @@
         id_mdl_info_cliente : '#modal_info_cliente',
         MODAL_COMMENT: '#IdmdlComment',
     };
-    const startOfMonth = moment().subtract(1,'days').format('YYYY-MM-DD');
-    const endOfMonth   = moment().subtract(0, "days").format("YYYY-MM-DD");
+    // Pedidos: por defecto desde el primer día del mes hasta hoy
+    const startOfMonth = moment().startOf('month').format('YYYY-MM-DD');
+    const endOfMonth   = moment().format('YYYY-MM-DD');
     var labelRange = startOfMonth + " to " + endOfMonth;
     var dta_ventas_mercados ;
     
@@ -155,10 +156,17 @@
         var todos = trs.length > 0 && trs.every(function (tr) { return api.row(tr).child.isShown(); });
         $('#sacPedTodo').text(todos ? 'Contraer todo' : 'Expandir todo').attr('data-abrir', todos ? '0' : '1');
     }
+    // La flecha abre y cierra el detalle
+    $('#tbl_mst_pedido').on('click', '.sac-ped-toggle', function (e) {
+        e.stopPropagation();
+        sacPedToggle($(this).closest('tr')[0]);
+    });
+    // Clic en la fila: solo abre (si está cerrado). Así se puede seleccionar y copiar sin que se cierre.
     $('#tbl_mst_pedido').on('click', 'tbody > tr:not(.sac-ped-child)', function (e) {
         if ($(e.target).closest('[data-ped-com], a, .btn').length) return;
-        if (!$(this).find('.sac-ped').length) return;
-        sacPedToggle(this);
+        if (!$(this).find('.sac-ped').length || $(this).hasClass('shown')) return;
+        if (window.getSelection && String(window.getSelection())) return;
+        sacPedToggle(this, true);
     });
     $('#tbl_mst_pedido').on('click', '[data-ped-com]', function (e) {
         e.stopPropagation();
@@ -330,6 +338,10 @@
     $( "#tbl_select_history_factura").change(function() {
         var table = $('#tbl_historico_factura').DataTable();
         table.page.len(this.value).draw();
+    });
+
+    $('#tbl_buscar_prod_fact').on('input', function () {
+        if ($.fn.dataTable.isDataTable('#tbl_prod_fact')) $('#tbl_prod_fact').DataTable().search(this.value).draw();
     });
 
     $('#tbl_buscar_history_factura').on('keyup', function() {        
@@ -1362,6 +1374,88 @@
         $('#sac_fact_count').text(numeral(n).format('0,0') + (n === 1 ? ' factura' : ' facturas'));
     });
 
+    // ===== Productos facturados (primera pestaña del modal de cliente) =====
+    var sacPf = { cliente: null, req: 0, fpDesde: null, fpHasta: null };
+    var sacPfHeader = [
+        { "title": "", "data": "ARTICULO", "render": function (data, type, row) {
+            if (type !== 'display') return [row.DESCRIPCION, row.ARTICULO, row.FACTURA, row.FECHA].join(' ');
+            var bonif = sacNum(row.PRECIO_UNITARIO) <= 0;
+            return '<div class="sac-fact">' +
+                '<span class="sac-fact-main"><span class="sac-art-name-plain">' + sacEsc(String(row.DESCRIPCION || '').toUpperCase()) + '</span>' +
+                '<span class="sac-cli-sub">' + sacEsc(row.ARTICULO) + ' · Fact. ' + sacEsc(row.FACTURA) + ' · ' + sacFecha(row.FECHA) + '</span></span>' +
+                (bonif ? '<span class="sac-tag sac-tag-info">Bonificado</span>' : '') +
+                '<span class="sac-pf-cant"><span class="sac-cli-sub">Cant.</span> <strong class="sac-num">' + numeral(row.CANTIDAD).format('0,0') + '</strong>' +
+                  (bonif ? '' : '<span class="sac-cli-sub d-block">' + sacMoney(row.PRECIO_UNITARIO) + ' c/u</span>') + '</span>' +
+                '<strong class="sac-fact-amt sac-num">' + (bonif ? '—' : sacMoney(row.PRECIO_TOTAL)) + '</strong>' +
+              '</div>';
+        }},
+        { "title": "Fecha", "data": "FECHA" }
+    ];
+    function sacPfIso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+    $(document).on('click', '#sacPfFiltrar', function () { sacPfCargar(); });
+
+    function sacPfCargar() {
+        if (!sacPf.cliente) return;
+        var req = ++sacPf.req;
+        var d1 = sacPf.fpDesde && sacPf.fpDesde.selectedDates[0], d2 = sacPf.fpHasta && sacPf.fpHasta.selectedDates[0];
+        if ($.fn.dataTable.isDataTable('#tbl_prod_fact')) $('#tbl_prod_fact').DataTable().clear().draw();
+        if (window.sacTableLoading) sacTableLoading('#tbl_prod_fact', true);
+        $.get('getProductosFacturados/' + encodeURIComponent(sacPf.cliente), { desde: d1 ? sacPfIso(d1) : '', hasta: d2 ? sacPfIso(d2) : '' }, function (res) {
+            if (req !== sacPf.req) return;
+            initTable('#tbl_prod_fact', res.filas || [], sacPfHeader, [[1, 'desc']], [1]);
+            $('#tbl_prod_fact_length, #tbl_prod_fact_filter').hide();
+            var api = $('#tbl_prod_fact').DataTable();
+            api.settings()[0].oLanguage.sEmptyTable = 'El cliente no tiene productos facturados en este periodo';
+            api.search($('#tbl_buscar_prod_fact').val() || '').page.len(10).draw();
+        }).fail(function () {
+            if (req !== sacPf.req) return;
+            if (window.sacTableError) sacTableError('#tbl_prod_fact', 'No se pudieron cargar los productos facturados.', sacPfCargar);
+        });
+    }
+    // Coloca el calendario pegado al campo. El cálculo propio de flatpickr usa coordenadas de la
+    // página, pero el calendario vive dentro del modal (fixed y con scroll), así que se desfasaba.
+    function sacPfPosicion(fp, el) {
+        var cal = fp.calendarContainer, ref = el || fp._positionElement;
+        if (!cal || !ref) return;
+        var host = cal.offsetParent || document.documentElement;
+        var r = ref.getBoundingClientRect(), h = host.getBoundingClientRect();
+        var ch = cal.offsetHeight, cw = cal.offsetWidth, vh = window.innerHeight, vw = window.innerWidth;
+        var arriba = (vh - r.bottom) < ch + 8 && r.top > ch + 8;
+        var top = (arriba ? r.top - ch - 4 : r.bottom + 4) - h.top + host.scrollTop;
+        var left = Math.max(8, Math.min(r.left, vw - cw - 8)) - h.left + host.scrollLeft;
+        cal.style.top = top + 'px'; cal.style.left = left + 'px'; cal.style.right = 'auto';
+        cal.classList.toggle('arrowTop', !arriba); cal.classList.toggle('arrowBottom', arriba);
+        cal.classList.add('arrowLeft'); cal.classList.remove('arrowRight', 'arrowCenter');
+    }
+    // Abre la pestaña para un cliente: limpia búsqueda, fija los últimos 90 días y consulta
+    function sacPfIniciar(idCliente) {
+        sacPf.cliente = idCliente;
+        $('#tbl_buscar_prod_fact').val('');
+        if (window.flatpickr && !sacPf.fpDesde) {
+            var M = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+            var base = {
+                locale: { weekdays: { shorthand: ['Do','Lu','Ma','Mi','Ju','Vi','Sá'], longhand: ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'] },
+                          months: { shorthand: M, longhand: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'] },
+                          firstDayOfWeek: 1, ordinal: function () { return ''; } },
+                dateFormat: 'Y-m-d', altInput: true, altFormat: 'j M Y', maxDate: 'today', disableMobile: true,
+                appendTo: document.getElementById('modal_info_cliente') || undefined,
+                position: sacPfPosicion
+            };
+            sacPf.fpDesde = flatpickr('#sacPfDesde', $.extend({}, base, { onChange: function (d) {
+                if (!d[0]) return; sacPf.fpHasta.set('minDate', d[0]);
+            } }));
+            sacPf.fpHasta = flatpickr('#sacPfHasta', $.extend({}, base, { onChange: function (d) {
+                if (!d[0]) return; sacPf.fpDesde.set('maxDate', d[0]);
+            } }));
+        }
+        if (sacPf.fpDesde) {
+            var hoy = new Date(); hoy.setHours(0, 0, 0, 0); var ini = new Date(hoy); ini.setDate(ini.getDate() - 90);
+            sacPf.fpDesde.set('maxDate', hoy); sacPf.fpHasta.set('minDate', ini);
+            sacPf.fpDesde.setDate(ini, false); sacPf.fpHasta.setDate(hoy, false);
+        }
+        sacPfCargar();
+    }
+
     function Modal_Cliente(Id){
         $("#id_load_cliente").show();
         var SAC_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 18 6-6-6-6"></path></svg>';
@@ -1419,7 +1513,7 @@
         $('#id_porcent_crecimientio').text('— %');
         $('#id_ttmes').text('');
         $('#flexSwitchCheckDefault').prop('checked', false);
-        $('#tbl_buscar_history_factura, #tbl_buscar_last3m, #tbl_search_nofacturado').val('');
+        $('#tbl_buscar_history_factura, #tbl_buscar_last3m, #tbl_search_nofacturado, #tbl_buscar_prod_fact').val('');
         var grafica = document.querySelector('.echart-sale-VentasDelMes');
         if (grafica && window.echarts && echarts.getInstanceByDom(grafica)) echarts.getInstanceByDom(grafica).clear();
         ['#tbl_historico_factura', '#tbl_ultm_3m', '#tbl_no_facturado'].forEach(function (sel) {
@@ -1432,8 +1526,9 @@
             if (window.sacTableLoading) sacTableLoading(sel, true);
         });
         // Siempre abre en la primera pestaña
-        var tabHist = document.getElementById('historico-factura-tab');
-        if (tabHist) bootstrap.Tab.getOrCreateInstance(tabHist).show();
+        var tabPrimera = document.getElementById('prod-fact-tab');
+        if (tabPrimera) bootstrap.Tab.getOrCreateInstance(tabPrimera).show();
+        sacPfIniciar(Id);
         // Descarta respuestas de un cliente abierto antes (si se abren dos seguidos)
         var sacCliReq = window.sacCliReq = (window.sacCliReq || 0) + 1;
 

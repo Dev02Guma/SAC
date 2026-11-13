@@ -32,6 +32,7 @@ Route::get('getDetallesFactura/{ID}', 'HomeController@getDetallesFactura')->name
 
 Route::get('getDataCliente', 'HomeController@getDataCliente')->name('getDataCliente');
 Route::get('getDataCliente/{ID}', 'HomeController@getDataCliente')->name('getDataCliente');
+Route::get('getProductosFacturados/{ID}', 'HomeController@getProductosFacturados')->name('getProductosFacturados');
 Route::get('Comiciones', 'HomeController@Comiciones')->name('Comiciones');
 
 Route::get('Usuarios', 'UsuarioController@getUsuarios')->name('Usuarios');

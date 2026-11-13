@@ -219,6 +219,37 @@ class HomeController extends Controller {
 
         return response()->json($dtaCliente);
     }
+    /**
+     * Productos facturados a un cliente en un rango de fechas (líneas de cada factura).
+     * Parámetros: ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD (por defecto, los últimos 90 días).
+     */
+    public function getProductosFacturados(Request $request, $idCliente)
+    {
+        $fecha = function ($v, $defecto) {
+            $d = \DateTime::createFromFormat('!Y-m-d', (string) $v);
+            return ($d && $d->format('Y-m-d') === $v) ? $d : $defecto;
+        };
+        $hasta = $fecha($request->query('hasta'), new \DateTime('today'));
+        $desde = $fecha($request->query('desde'), (clone $hasta)->modify('-90 days'));
+        if ($desde > $hasta) { [$desde, $hasta] = [$hasta, $desde]; }
+        $finExclusivo = (clone $hasta)->modify('+1 day');
+
+        $filas = DB::connection('sqlsrv')->select(
+            "SELECT TOP 5000 H.FACTURA, CONVERT(varchar(10), H.Dia, 23) AS FECHA,
+                    D.ARTICULO, D.DESCRIPCION, D.CANTIDAD, D.PRECIO_UNITARIO, D.PRECIO_TOTAL
+               FROM PRODUCCION.dbo.iweb4_historico_factura H
+               INNER JOIN PRODUCCION.dbo.UMK_DETALLES_FACTURAS D ON D.FACTURA = H.FACTURA
+              WHERE H.COD_CLIENTE = ? AND H.Dia >= ? AND H.Dia < ?
+              ORDER BY H.Dia DESC, H.FACTURA DESC, D.LINEA",
+            [(string) $idCliente, $desde->format('Y-m-d'), $finExclusivo->format('Y-m-d')]
+        );
+
+        return response()->json([
+            'desde' => $desde->format('Y-m-d'),
+            'hasta' => $hasta->format('Y-m-d'),
+            'filas' => $filas,
+        ]);
+    }
     public function getDataArticulo($idArticulo)
     {
         $dtaArticulo[] = array(

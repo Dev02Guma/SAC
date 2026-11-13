@@ -6,13 +6,28 @@
   // Nueva UI: el menú lateral controla las pestañas (ocultas) de esta página vía #hash.
   (function () {
     var SECCIONES = {
-      pedidos:     { tab: 'crm-pedido-tab',    titulo: 'Pedidos',      sub: 'Pedidos por rango de fechas, estado y SAC' },
+      pedidos:     { tab: 'crm-pedido-tab',    titulo: 'Pedidos',      sub: function () { return sacPedRangoTexto(); } },
       promociones: { tab: 'crm-promocion-tab', titulo: 'Promociones',  sub: 'Bonificaciones y descuentos que puedes ofrecer hoy' },
       inventario:  { tab: 'crm-revenue-tab',   titulo: 'Inventario',   sub: 'Existencias, precios y lotes por bodega' },
       clientes:    { tab: 'crm-profit-tab',    titulo: 'Clientes',     sub: 'Tu cartera con crédito, saldo y contacto' },
       liquidacion: { tab: 'crm-users-tab',     titulo: 'Liquidación',  sub: 'Lotes que vencen en los próximos 12 meses' },
       'liquidacion-6': { tab: 'crm-deals-tab', titulo: 'Liquidación',  sub: 'Lotes que vencen en los próximos 6 meses', nav: 'liquidacion' }
     };
+    // "1 nov – 13 nov 2026" a partir del campo oculto "AAAA-MM-DD to AAAA-MM-DD"
+    var MES = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+    function sacPedRangoTexto() {
+      var el = document.getElementById('id_range_select');
+      var f = String(el && el.value || '').split('to').map(function (x) {
+        var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(x.trim());
+        return m ? { a: +m[1], m: +m[2] - 1, d: +m[3] } : null;
+      }).filter(Boolean);
+      if (!f.length) return 'Pedidos por rango de fechas, estado y SAC';
+      var a = f[0], b = f[1] || f[0];
+      var txt = function (x, anio) { return x.d + ' ' + MES[x.m] + (anio ? ' ' + x.a : ''); };
+      if (a.a === b.a && a.m === b.m && a.d === b.d) return 'Pedidos del ' + txt(a, true);
+      return 'Pedidos del ' + txt(a, a.a !== b.a) + ' al ' + txt(b, true);
+    }
+    var actual = null;
     var TAB_A_SECCION = {};
     Object.keys(SECCIONES).forEach(function (k) { TAB_A_SECCION[SECCIONES[k].tab] = k; });
 
@@ -20,8 +35,9 @@
       var cfg = SECCIONES[seccion];
       if (!cfg) return;
       var nav = cfg.nav || seccion;
+      actual = seccion;
       document.getElementById('sacPageTitle').textContent = cfg.titulo;
-      document.getElementById('sacPageSub').textContent = cfg.sub;
+      document.getElementById('sacPageSub').textContent = typeof cfg.sub === 'function' ? cfg.sub() : cfg.sub;
       var top = document.getElementById('sacTopTitle');
       if (top) top.textContent = cfg.titulo;
       document.title = cfg.titulo + ' · SAC Unimark';
@@ -40,6 +56,11 @@
         el.classList.toggle('d-none', lista.indexOf(nav) === -1);
       });
     }
+
+    // Al cambiar las fechas de Pedidos se actualiza el subtítulo
+    $('#id_range_select').on('change', function () {
+      if (actual === 'pedidos') document.getElementById('sacPageSub').textContent = sacPedRangoTexto();
+    });
 
     function mostrar(seccion) {
       var cfg = SECCIONES[seccion];
@@ -713,16 +734,42 @@
 
                     <div class="card" style="overflow: hidden">
                       <ul class="nav nav-tabs sac-tabs-line" id="sacCliTabs" role="tablist" data-tab-has-echarts="data-tab-has-echarts">
-                        <li class="nav-item" role="presentation"><a class="nav-link active" id="historico-factura-tab" data-bs-toggle="tab" href="#historico-factura" role="tab" aria-controls="historico-factura" aria-selected="true">Histórico de facturas</a></li>
-                        <li class="nav-item" role="presentation"><a class="nav-link" id="Ultm-3meses-tab" data-bs-toggle="tab" href="#Ultm-3meses" role="tab" aria-controls="Ultm-3meses" aria-selected="false">Últimos 3 meses</a></li>
-                        <li class="nav-item" role="presentation"><a class="nav-link" id="art-no-fact-tab" data-bs-toggle="tab" href="#art-no-fact" role="tab" aria-controls="art-no-fact" aria-selected="false">Artículos no facturados</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link active" id="prod-fact-tab" data-bs-toggle="tab" href="#prod-fact" role="tab" aria-controls="prod-fact" aria-selected="true">Historico</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" id="historico-factura-tab" data-bs-toggle="tab" href="#historico-factura" role="tab" aria-controls="historico-factura" aria-selected="false">Facturas</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" id="Ultm-3meses-tab" data-bs-toggle="tab" href="#Ultm-3meses" role="tab" aria-controls="Ultm-3meses" aria-selected="false">Ult. 3 meses</a></li>
+                        <li class="nav-item" role="presentation"><a class="nav-link" id="art-no-fact-tab" data-bs-toggle="tab" href="#art-no-fact" role="tab" aria-controls="art-no-fact" aria-selected="false">Art. no fact</a></li>
                         @if (Session::get('rol') == '1')
                           <li class="nav-item" role="presentation"><a class="nav-link" id="plan-creci-tab" data-bs-toggle="tab" href="#plan-creci" role="tab" aria-controls="plan-creci" aria-selected="false">Plan de crecimiento</a></li>
                         @endif
                       </ul>
 
                       <div class="tab-content">
-                        <div class="tab-pane active" id="historico-factura" role="tabpanel" aria-labelledby="historico-factura-tab">
+                        {{-- Productos facturados: líneas de factura del cliente entre dos fechas --}}
+                        <div class="tab-pane active" id="prod-fact" role="tabpanel" aria-labelledby="prod-fact-tab">
+                          <div class="sac-toolbar sac-pf-bar">
+                            <div class="input-group" style="max-width: 300px; flex: 1 1 220px">
+                              <span class="input-group-text">{!! $searchIco !!}</span>
+                              <input class="form-control form-control-sm shadow-none search" type="search" placeholder="Buscar producto o factura…" aria-label="Buscar productos facturados" id="tbl_buscar_prod_fact" />
+                            </div>
+                            <div class="sac-range2 sac-range2-sm" role="group" aria-label="Rango de fechas de facturación">
+                              <div class="sac-range">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                                <label class="visually-hidden" for="sacPfDesde">Desde</label>
+                                <input type="text" class="form-control" id="sacPfDesde" placeholder="Desde" readonly>
+                              </div>
+                              <span class="sac-range2-sep" aria-hidden="true">–</span>
+                              <div class="sac-range">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"></rect><path d="M16 2v4M8 2v4M3 10h18"></path></svg>
+                                <label class="visually-hidden" for="sacPfHasta">Hasta</label>
+                                <input type="text" class="form-control" id="sacPfHasta" placeholder="Hasta" readonly>
+                              </div>
+                            </div>
+                            <button type="button" class="btn btn-primary btn-sm sac-pf-btn" id="sacPfFiltrar"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"></path></svg> Filtrar</button>
+                          </div>
+                          <div class="sac-tblbox"><table id="tbl_prod_fact" class="table sac-list overflow-hidden" style="width:100%"></table></div>
+                        </div>
+
+                        <div class="tab-pane" id="historico-factura" role="tabpanel" aria-labelledby="historico-factura-tab">
                           <div class="sac-toolbar">
                             <div class="input-group" style="max-width: 320px; flex: 1 1 240px">
                               <span class="input-group-text">{!! $searchIco !!}</span>
