@@ -1132,3 +1132,53 @@ html[data-sac-theme="dark"] body.sac .choices__list--dropdown, html[data-sac-the
 
 /* Gráficas de ECharts: fondo transparente sobre la tarjeta */
 html[data-sac-theme="dark"] body.sac [class*="echart"] canvas { filter: none; }
+
+/* ---------- Estadísticas ---------- */
+.sac-tag-ok { background: var(--sac-ok-bg); color: var(--sac-ok-ink); }
+body.sac .sac-est-kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.sac-est-kl-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; }
+.sac-est-kl-row .sac-tag { height: 22px; font-size: 11.5px; }
+.sac-est-strong { color: var(--sac-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.sac-est-bar { position: relative; overflow: visible; }
+.sac-est-bar > span { overflow: hidden; }
+.sac-est-bar > span.is-ok { background: var(--sac-ok); }
+.sac-est-mark { position: absolute; top: -4px; width: 2px; height: 14px; margin-left: -1px; border-radius: 2px; background: var(--sac-ink); opacity: .55; }
+.sac-est-chart-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 8px; padding: 16px 20px 0; }
+.sac-est-chart-head strong { color: var(--sac-ink); font-weight: 600; }
+.sac-est-chart { position: relative; padding: 8px 12px 12px; }
+.sac-est-empty { margin: 0; padding: 40px 16px; text-align: center; color: var(--sac-muted); font-size: 13.5px; }
+.sac-est-chart .sac-est-empty { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+.sac-est-chart .sac-est-empty[hidden] { display: none; }
+.sac-est-tip { min-width: 150px; padding: 10px 12px; font-family: var(--sac-font); }
+.sac-est-tip-t { font-size: 12px; color: var(--sac-muted); margin-bottom: 2px; }
+.sac-est-tip-v { font-size: 15px; font-weight: 650; color: var(--sac-ink); font-variant-numeric: tabular-nums; }
+.sac-est-tip-x { font-size: 12px; color: var(--sac-muted); margin-top: 2px; }
+.sac-est-ico { width: 34px; padding: 0 !important; }
+
+/* Tarjetas por ruta */
+.sac-est-rutas { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; padding: 16px; }
+.sac-est-rutas > .sac-est-empty { grid-column: 1 / -1; }
+.sac-est-ruta { display: flex; flex-direction: column; border: 1px solid var(--sac-border); border-radius: var(--sac-radius); background: var(--sac-surface); overflow: hidden; }
+.sac-est-ruta-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-bottom: 1px solid var(--sac-border-soft); }
+.sac-est-av { flex: none; width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: var(--sac-primary-soft); color: var(--sac-primary); font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.sac-est-ruta-id { flex: 1; min-width: 0; }
+.sac-est-ruta-name { font-size: 14.5px; font-weight: 650; color: var(--sac-ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sac-est-ruta-body { display: flex; flex-direction: column; gap: 16px; padding: 16px; }
+.sac-est-metric { display: flex; flex-direction: column; gap: 6px; }
+.sac-est-metric-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.sac-est-big { font-size: 22px; font-weight: 650; letter-spacing: -0.02em; line-height: 1.2; color: var(--sac-ink); }
+.sac-est-big .sac-kv-of { font-size: 14px; }
+.sac-est-metric .sac-muted strong { font-weight: 650; }
+.sac-est-up { color: var(--sac-ok-ink); }
+.sac-est-warn { color: var(--sac-warn-ink); }
+.sac-est-down { color: var(--sac-bad-ink); }
+.sac-est-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1px; margin: 0; background: var(--sac-border-soft); border: 1px solid var(--sac-border-soft); border-radius: var(--sac-radius-sm); overflow: hidden; }
+.sac-est-grid > div { background: var(--sac-surface-2); padding: 10px 12px; min-width: 0; }
+.sac-est-grid dt { font-size: 11.5px; font-weight: 500; color: var(--sac-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sac-est-grid dd { margin: 2px 0 0; font-size: 14px; font-weight: 600; color: var(--sac-ink); white-space: nowrap; }
+@media (max-width: 480px) {
+  .sac-est-rutas { grid-template-columns: 1fr; padding: 12px; }
+  .sac-est-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Calendario del plan de trabajo dentro de la tarjeta */
+body.sac #crm-schedule .calendar-outline { border-top: 0; }

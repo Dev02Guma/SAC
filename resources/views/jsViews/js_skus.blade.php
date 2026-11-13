@@ -20,6 +20,7 @@
         var select_mes = $("#id_num_mes option:selected").val();
         var select_anno = $("#id_num_anno option:selected").val();
         var select_vendedor = $("#id_select_vendedor option:selected").val();    
+        if (window.sacTableLoading) sacTableLoading('#dt_articulos', true);
         btn_table = new DataTable('#dt_articulos',{
             "ajax": {
                 "url": `/api/getHistoryItems/${select_vendedor}/${select_mes}/${select_anno}`,
@@ -43,7 +44,7 @@
                     "previous":   "Anterior"
                 },
                 "lengthMenu": "_MENU_",
-                "emptyTable": "NO HAY DATOS DISPONIBLES",
+                "emptyTable": "No hay SKUs para este vendedor en el mes elegido",
                 "search":     ""
             },
             

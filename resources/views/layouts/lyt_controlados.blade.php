@@ -54,7 +54,7 @@
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
     
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
-    <link href="{{ asset('css/sac-ui.css') }}?v=51" rel="stylesheet">
+    <link href="{{ asset('css/sac-ui.css') }}?v=52" rel="stylesheet">
     <script>
         var linkRTL = document.getElementById('style-rtl');
         var userLinkRTL = document.getElementById('user-style-rtl');
