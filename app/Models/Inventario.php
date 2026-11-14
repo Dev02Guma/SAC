@@ -63,6 +63,12 @@ class Inventario extends Model
         $listaArticulos = Inventario::with('cuarentena')->whereIn('ARTICULO',$ArticuloCache)->get();
         $Info_Articulo = Productos::whereIn('product_sku', $ArticuloCache)->get();
 
+        // Una sola ida a Redis para todas las URLs (antes era un GET por artículo).
+        $imgKeys = $listaArticulos->map(function ($item) {
+            return 'Arti_Url_Img_v2_' . $item->ARTICULO;
+        })->all();
+        $cachedImageUrls = $imgKeys ? array_combine($imgKeys, Redis::mget($imgKeys)) : [];
+        $nuevasUrls = [];
 
         foreach($listaArticulos as $item){
 
@@ -88,18 +94,26 @@ class Inventario extends Model
             }
             $json[$i]['IMG_NOMBRE'] = $img;
         
-            $cachedImageUrl = Redis::get('Arti_Url_Img_v2_' . $item->ARTICULO);
-            if ($cachedImageUrl) {
-                $imgUrl = $cachedImageUrl;
-            } else {
+            $imgKey = 'Arti_Url_Img_v2_' . $item->ARTICULO;
+            $imgUrl = $cachedImageUrls[$imgKey] ?? null;
+            if (!$imgUrl) {
                 $imgUrl = Storage::disk('s3')->temporaryUrl('product/'.$img, now()->addHours(12)); // válida 12 h; Redis la guarda 6 h
-                Redis::setex('Arti_Url_Img_v2_' . $item->ARTICULO, 21600, $imgUrl); 
+                $nuevasUrls[$imgKey] = $imgUrl;
             }
 
             $json[$i]['IMG_URL'] = $imgUrl;
             $json[$i]['cuarentena'] = $item->cuarentena;
 
             $i++;
+        }
+
+        // Guarda las URLs nuevas en un solo pipeline (6 h).
+        if ($nuevasUrls) {
+            Redis::pipeline(function ($pipe) use ($nuevasUrls) {
+                foreach ($nuevasUrls as $key => $url) {
+                    $pipe->setex($key, 21600, $url);
+                }
+            });
         }
         //dd($json);
         return $json;
