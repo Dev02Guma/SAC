@@ -10,8 +10,11 @@ class Pedido extends Model {
     protected $connection = 'mysql_pedido';    
     protected $table = "tbl_order";
 
+    public function Comentarios(){
+        return $this->hasMany('App\Models\PedidoComentario','orden_code','code');
+    }
     public function CountsComments(){
-        return $this->hasMany('App\Models\PedidoComentario','orden_code','code')->count();    
+        return $this->Comentarios()->count();
     }
     public function getUsuario(){
         return $this->hasOne(UsuarioVendedor::class,'username','name');
@@ -75,10 +78,16 @@ class Pedido extends Model {
 
         
 
-        $query = Pedido::whereBetween('date_time', [$start, $end])->where($Condicionales)->whereIn('name',$Rutas)->get(); 
+        // withCount: el conteo de comentarios viene en la misma consulta (antes era 1 consulta por pedido).
+        $query = Pedido::whereBetween('date_time', [$start, $end])->where($Condicionales)->whereIn('name',$Rutas)->withCount('Comentarios')->get();
 
-
-
+        // Nombres de vendedor en una sola consulta (antes era 1 consulta por pedido).
+        $codigosVendedor = $query->map(function ($fila) {
+            return substr($fila["name"], 0, 3);
+        })->unique()->values()->all();
+        $NombresVendedor = $codigosVendedor
+            ? Vendedor::whereIn('VENDEDOR', $codigosVendedor)->pluck('NOMBRE', 'VENDEDOR')
+            : collect();
 
         $i = 0;
         $json = array();
@@ -92,14 +101,14 @@ class Pedido extends Model {
             $json[$i]["DESCRIPCION"]    = $fila["phone"];
             $json[$i]["DIRECCION"]      = $fila["address"];
             $json[$i]["RUTA"]           = $fila["name"];
-            $json[$i]["VENDEDOR"]       = Vendedor::where('VENDEDOR',$CodeRuta)->get()->pluck('NOMBRE')[0] ?? 'N/D';            
+            $json[$i]["VENDEDOR"]       = $NombresVendedor[$CodeRuta] ?? 'N/D';
             $json[$i]["FECHA"]          = date('M d, Y h:i A', strtotime($fila["created_at"])) ;
             $json[$i]["ARTICULOS"]      = $fila["order_list"];
             $json[$i]["MONTO"]          = $fila["order_total"];
             $json[$i]["COMMENT"]        = $fila["comment"];
             $json[$i]["ESTADO"]         = $Estados[$fila["status"]];
             $json[$i]["COLOR"]          = $ColorSt[$fila["status"]];
-            $json[$i]["CountsComments"]          = $fila->CountsComments();
+            $json[$i]["CountsComments"]          = $fila->comentarios_count;
 
             
             $i++;
