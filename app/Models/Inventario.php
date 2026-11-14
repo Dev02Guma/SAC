@@ -42,7 +42,14 @@ class Inventario extends Model
         foreach($ArticuloListaNegraCache as $lista){
             $lista_negra[] = $lista->articulo;
         }
-        return Inventario::whereNotIn('ARTICULO',$ArticuloFavoritosCache)->whereNotIn('ARTICULO',$lista_negra)->get();
+        // Se filtra en PHP: un NOT IN con ~250 códigos sobre la vista iweb_articulos
+        // tarda ~5 s en SQL Server, leerla completa ~1.5 s.
+        // trim + mayúsculas: SQL Server ignora espacios finales y mayúsculas al comparar (hay códigos guardados con espacio).
+        $norm = function ($v) { return strtoupper(trim((string) $v)); };
+        $excluir = array_flip(array_map($norm, array_merge($ArticuloFavoritosCache, $lista_negra)));
+        return Inventario::get()->reject(function ($item) use ($excluir, $norm) {
+            return isset($excluir[$norm($item->ARTICULO)]);
+        })->values();
         
     }
     public static function getArticulosFavoritos()
