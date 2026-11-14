@@ -115,7 +115,10 @@ if ( typeof jQuery != "undefined" )
         </div>
     @else
         <div class="sac-app" id="sacApp">
-            @include('layouts.sac_sidebar')
+            {{-- Devolución (rol 12) solo usa su pantalla: sin menú lateral. --}}
+            @if ((string) Session::get('rol') !== '12')
+                @include('layouts.sac_sidebar')
+            @endif
             <div class="sac-main" id="app">
                 @yield('content')
             </div>

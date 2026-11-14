@@ -1,8 +1,10 @@
 {{-- Barra superior (nueva UI). Se mantiene el nombre del parcial porque todas las vistas lo incluyen. --}}
 <header class="sac-top">
+  @if ((string) Session::get('rol') !== '12')
   <button class="sac-ib" type="button" aria-label="Ocultar o mostrar menú lateral" title="Ocultar/mostrar menú (Ctrl+B)" aria-controls="sacSide" aria-expanded="true" data-sac-toggle>
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path></svg>
   </button>
+  @endif
 
   <img class="sac-top-logo" src="{{ asset('images/logo-20-iso.png') }}" alt="Unimark 20 años" width="36" height="36">
   <div class="sac-top-title">Unimark S.A. · <strong id="sacTopTitle">@yield('sac_title', 'SAC')</strong></div>
