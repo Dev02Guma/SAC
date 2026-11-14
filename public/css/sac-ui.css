@@ -1182,3 +1182,17 @@ body.sac .sac-est-kpis { grid-template-columns: repeat(auto-fit, minmax(200px, 1
 }
 /* Calendario del plan de trabajo dentro de la tarjeta */
 body.sac #crm-schedule .calendar-outline { border-top: 0; }
+
+/* Artículos favoritos: estrella para marcar/desmarcar */
+.sac-chip.on .sac-n { color: inherit; opacity: .8; }
+.sac-fav {
+  width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-radius: 10px; background: transparent; color: var(--sac-faint); fill: none;
+  cursor: pointer; transition: color .15s ease-out, background-color .15s ease-out, transform .1s ease-out;
+}
+.sac-fav:hover { background: var(--sac-hover); color: var(--sac-warn); }
+.sac-fav:active { transform: scale(.92); }
+.sac-fav.on { color: var(--sac-warn); fill: currentColor; }
+.sac-fav[disabled] { opacity: .5; cursor: progress; }
+body.sac #tbl_inventario tbody tr.sac-inv-off > td:has(.sac-fav) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .sac-fav { transition: none; } }
