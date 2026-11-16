@@ -70,6 +70,9 @@ Route::get('get_nc', 'GmvApiController@get_nc')->name('get_nc');
 Route::get('get_stat_ruta', 'GmvApiController@get_stat_ruta')->name('get_stat_ruta');
 
 Route::post('post_report', 'GmvApiController@post_report')->name('post_report');
+Route::post('post_add_comments_im', 'GmvApiController@post_add_comments_im')->name('post_add_comments_im');
+Route::post('post_remove_post_im', 'GmvApiController@post_remove_post_im')->name('post_remove_post_im');
+Route::post('remove_comments', 'GmvApiController@remove_comments')->name('remove_comments');
 Route::post('push_pin', 'GmvApiController@push_pin')->name('push_pin');
 Route::get('stac_recup', 'GmvApiController@stac_recup')->name('stac_recup');
 Route::get('get_history_lotes', 'GmvApiController@get_history_lotes')->name('get_history_lotes');
@@ -94,8 +97,11 @@ Route::post('reutilizar', 'ScheduleController@reutilizar')->name('reutilizar');
 
 Route::get('Promociones', 'GmvApiController@Promociones')->name('Promociones');
 
-Route::get('UpdateVendedores', 'ScheduleController@UpdateVendedores')->name('UpdateVendedores');
 
-Route::get('CheckPromo', 'GmvApiController@CronCheckPromo')->name('CheckPromo');
+
+
+Route::get('SendNotification', 'GmvApiController@SendNotification')->name('SendNotification');
+
+
 
 

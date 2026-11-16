@@ -64,6 +64,27 @@ return [
             'url' => env('AWS_URL'),
             'endpoint' => env('AWS_ENDPOINT'),
             'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT',true),
+            // Aviso de fin de soporte de PHP 7.4 en el AWS SDK; Laravel lo convierte en excepcion.
+            'suppress_php_deprecation_warning' => true,
+            // Verificacion SSL del endpoint S3. Solo en desarrollo local se apaga con
+            // AWS_SSL_VERIFY=false en el .env; en produccion no definas la variable (queda en true).
+            'http' => ['verify' => env('AWS_SSL_VERIFY', true)],
+        ],
+        // REMOVER CUANDO SE RESTAURE EL ENRUTAMIENTOS DE LAS IP PUBLICAS
+        's3_tmp' => [
+            'driver' => 's3',
+            'key' => env('AWS_ACCESS_KEY_ID'),
+            'secret' => env('AWS_SECRET_ACCESS_KEY'),
+            'region' => env('AWS_DEFAULT_REGION'),
+            'bucket' => env('AWS_BUCKET'),
+            'url' => env('AWS_URL_TMP'),
+            'endpoint' => env('AWS_ENDPOINT_TMP'),
+            'use_path_style_endpoint' => env('AWS_USE_PATH_STYLE_ENDPOINT',true),
+            // Aviso de fin de soporte de PHP 7.4 en el AWS SDK; Laravel lo convierte en excepcion.
+            'suppress_php_deprecation_warning' => true,
+            // Verificacion SSL del endpoint S3. Solo en desarrollo local se apaga con
+            // AWS_SSL_VERIFY=false en el .env; en produccion no definas la variable (queda en true).
+            'http' => ['verify' => env('AWS_SSL_VERIFY', true)],
         ],
         // REMOVER CUANDO SE RESTAURE EL ENRUTAMIENTOS DE LAS IP PUBLICAS
         'dpromo' => [

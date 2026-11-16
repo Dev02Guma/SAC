@@ -5,6 +5,7 @@ namespace App\Models;
 use DateTime;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +17,10 @@ class Inventario extends Model
     protected $connection = 'sqlsrv';
     public $timestamps = false;
     protected $table = "PRODUCCION.dbo.iweb_articulos";
+
+    public function cuarentena(): HasOne{
+        return $this->hasOne(Cuarentena::class, 'ARTICULO', 'ARTICULO');
+    }
 
     public static function getArticulos()
     {
@@ -37,7 +42,14 @@ class Inventario extends Model
         foreach($ArticuloListaNegraCache as $lista){
             $lista_negra[] = $lista->articulo;
         }
-        return Inventario::whereNotIn('ARTICULO',$ArticuloFavoritosCache)->whereNotIn('ARTICULO',$lista_negra)->get();
+        // Se filtra en PHP: un NOT IN con ~250 códigos sobre la vista iweb_articulos
+        // tarda ~5 s en SQL Server, leerla completa ~1.5 s.
+        // trim + mayúsculas: SQL Server ignora espacios finales y mayúsculas al comparar (hay códigos guardados con espacio).
+        $norm = function ($v) { return strtoupper(trim((string) $v)); };
+        $excluir = array_flip(array_map($norm, array_merge($ArticuloFavoritosCache, $lista_negra)));
+        return Inventario::get()->reject(function ($item) use ($excluir, $norm) {
+            return isset($excluir[$norm($item->ARTICULO)]);
+        })->values();
         
     }
     public static function getArticulosFavoritos()
@@ -55,8 +67,15 @@ class Inventario extends Model
             })->pluck('Articulo')->toArray();
         }
         
-        $listaArticulos = Inventario::whereIn('ARTICULO',$ArticuloCache)->get();
+        $listaArticulos = Inventario::with('cuarentena')->whereIn('ARTICULO',$ArticuloCache)->get();
         $Info_Articulo = Productos::whereIn('product_sku', $ArticuloCache)->get();
+
+        // Una sola ida a Redis para todas las URLs (antes era un GET por artículo).
+        $imgKeys = $listaArticulos->map(function ($item) {
+            return 'Arti_Url_Img_v2_' . $item->ARTICULO;
+        })->all();
+        $cachedImageUrls = $imgKeys ? array_combine($imgKeys, Redis::mget($imgKeys)) : [];
+        $nuevasUrls = [];
 
         foreach($listaArticulos as $item){
 
@@ -82,17 +101,26 @@ class Inventario extends Model
             }
             $json[$i]['IMG_NOMBRE'] = $img;
         
-            $cachedImageUrl = Redis::get('Arti_Url_Img_' . $item->ARTICULO);
-            if ($cachedImageUrl) {
-                $imgUrl = $cachedImageUrl;
-            } else {
-                $imgUrl = Storage::disk('s3')->temporaryUrl('product/'.$img, now()->addMinutes(5));
-                Redis::setex('Arti_Url_Img_' . $item->ARTICULO, 300, $imgUrl); 
+            $imgKey = 'Arti_Url_Img_v2_' . $item->ARTICULO;
+            $imgUrl = $cachedImageUrls[$imgKey] ?? null;
+            if (!$imgUrl) {
+                $imgUrl = Storage::disk('s3')->temporaryUrl('product/'.$img, now()->addHours(12)); // válida 12 h; Redis la guarda 6 h
+                $nuevasUrls[$imgKey] = $imgUrl;
             }
 
             $json[$i]['IMG_URL'] = $imgUrl;
+            $json[$i]['cuarentena'] = $item->cuarentena;
 
             $i++;
+        }
+
+        // Guarda las URLs nuevas en un solo pipeline (6 h).
+        if ($nuevasUrls) {
+            Redis::pipeline(function ($pipe) use ($nuevasUrls) {
+                foreach ($nuevasUrls as $key => $url) {
+                    $pipe->setex($key, 21600, $url);
+                }
+            });
         }
         //dd($json);
         return $json;

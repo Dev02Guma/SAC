@@ -17,6 +17,7 @@ class Kernel extends ConsoleKernel
      */
     protected $commands = [
         \App\Console\Commands\RunPedidosCommand::class,
+        \App\Console\Commands\InsertarExcepciones::class,
     ];    
 
     /**

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en-US" dir="ltr">
+<html lang="es" dir="ltr">
 
 <head>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <link rel="shortcut icon" href="{{ url('images/favicon.png') }}" />
+    <link rel="shortcut icon" href="{{ url('images/favicon-20.png') }}" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -13,13 +13,23 @@
     <!-- ===============================================-->
     <!--    Document Title-->
     <!-- ===============================================-->
-    <title>PLATAFORMA | UNIMARK S,A </title>
+    <title>SAC | Unimark S.A.</title>
 
 
     <!-- ===============================================-->
     <!--    Stylesheets-->
     <!-- ===============================================-->
     
+    <script>
+        // Tema (claro / oscuro): preferencia guardada o la del sistema. Se aplica antes de pintar.
+        (function () {
+            var t = null;
+            try { t = localStorage.getItem('sacTheme'); } catch (e) {}
+            if (t !== 'dark' && t !== 'light') t = (window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-sac-theme', t);
+            try { localStorage.setItem('theme', t); } catch (e) {} // el tema Falcon (config.js) lee esta clave
+        })();
+    </script>
     <script src="{{ asset('js/theme_gumadesk/config.js') }}"></script>
     <script src="{{ asset('js/theme_gumadesk/vendors/overlayscrollbars/OverlayScrollbars.min.js') }}"></script>
     
@@ -33,7 +43,7 @@
     <link href="{{ asset('js/theme_gumadesk/vendors/fullcalendar/main.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('js/theme_gumadesk/vendors/swiper/swiper-bundle.min.css') }}" rel="stylesheet" >
     <link rel="preconnect" href="https://fonts.gstatic.com">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,500,600,700%7cPoppins:300,400,500,600,700,800,900&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&amp;family=Barlow+Condensed:wght@600;700;800&amp;display=swap" rel="stylesheet">
     <link href="{{ asset('js/theme_gumadesk/vendors/overlayscrollbars/OverlayScrollbars.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('css/theme_gumadesk/css/theme-rtl.min.css') }}" rel="stylesheet" id="style-rtl">
     <link href="{{ asset('css/theme_gumadesk/css/theme.min.css') }}" rel="stylesheet" id="style-default">
@@ -42,6 +52,8 @@
     <link href="{{ asset('js/theme_gumadesk/vendors/choices/choices.min.css') }}" rel="stylesheet" >
     <link href="{{ asset('css/jquery.dataTables.min.css') }}" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/pikaday/css/pikaday.css">
+    <link href="{{ asset('css/sac-ui.css') }}?v=52" rel="stylesheet">
+    
     <script>
         var linkRTL = document.getElementById('style-rtl');
         var userLinkRTL = document.getElementById('user-style-rtl');
@@ -92,14 +104,26 @@ if ( typeof jQuery != "undefined" )
         }
     </style>
 </head>
-<body>
+<body class="sac">
 
     <!-- ===============================================-->
     <!--    Main Content-->
     <!-- ===============================================-->
-    <div id="app">
-        @yield('content')
-    </div>
+    @hasSection('noshell')
+        <div id="app">
+            @yield('content')
+        </div>
+    @else
+        <div class="sac-app" id="sacApp">
+            {{-- Devolución (rol 12) solo usa su pantalla: sin menú lateral. --}}
+            @if ((string) Session::get('rol') !== '12')
+                @include('layouts.sac_sidebar')
+            @endif
+            <div class="sac-main" id="app">
+                @yield('content')
+            </div>
+        </div>
+    @endif
     <!-- ===============================================-->
     <!--    End of Main Content-->
     <!-- ===============================================-->
@@ -132,7 +156,7 @@ if ( typeof jQuery != "undefined" )
     <script src="{{ asset('js/theme_gumadesk/vendors/fullcalendar/main.min.js') }}" ></script>
     <script src="{{ asset('js/theme_gumadesk/vendors/fontawesome/all.min.js') }}"></script>
     <script src="{{ asset('js/theme_gumadesk/vendors/lodash/lodash.min.js') }}"></script>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=window.scroll"></script>
+    <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=window.scroll"></script>
     <script src="{{ asset('js/theme_gumadesk/vendors/list.js/list.min.js') }}"></script>
     <script src="{{ asset('js/theme_gumadesk/theme.js') }}"></script>
     <script src="{{ asset('js/theme_gumadesk/vendors/choices/choices.min.js') }}"></script>
@@ -148,6 +172,11 @@ if ( typeof jQuery != "undefined" )
     <script src="https://cdn.datatables.net/select/1.4.0/js/dataTables.select.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="{{ asset('js/theme_gumadesk/flatpickr.js') }}"></script>
+    
+
+
+    @include('layouts.sac_shell_js')
+
     @yield('metodosjs')
     
     @include('sweet::alert')

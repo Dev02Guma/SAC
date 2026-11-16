@@ -10,8 +10,11 @@ class Pedido extends Model {
     protected $connection = 'mysql_pedido';    
     protected $table = "tbl_order";
 
+    public function Comentarios(){
+        return $this->hasMany('App\Models\PedidoComentario','orden_code','code');
+    }
     public function CountsComments(){
-        return $this->hasMany('App\Models\PedidoComentario','orden_code','code')->count();    
+        return $this->Comentarios()->count();
     }
     public function getUsuario(){
         return $this->hasOne(UsuarioVendedor::class,'username','name');
@@ -26,6 +29,7 @@ class Pedido extends Model {
     {
         $Rutas          = array();
         $Condicionales  = array();
+        $GrupoB         = array();
 
         $Estados        = ['PENDIENTE','PROCESADO','CANCELADO'];
         $ColorSt        = ['danger','success','info'];        
@@ -38,13 +42,18 @@ class Pedido extends Model {
 
         $rol = Session::get('rol');
         
-        if($rol == 1 || $rol ==2){
+        if($rol == 1 || $rol ==2 ){
 
             if($SAC == '0'){
                 $Vendedor = Vendedor::getVendedor();
+
                 foreach ($Vendedor as $v){
                     $Rutas[] = $v->VENDEDOR;
                 }
+
+                $GrupoB = ['F2614', 'F2606', 'F2707', 'F2708', 'F2804', 'F2802', 'F2822','F2911','F2503','F2513','F3009','F3010'];
+                $Rutas = array_merge($Rutas, $GrupoB);
+                
             }else{
                 $Usuario = Usuario::where('username',$SAC)->get();
                 foreach ($Usuario as $rec){            
@@ -54,8 +63,7 @@ class Pedido extends Model {
                 }
             }
             
-        }else{
-            
+        }else{            
             $Usuario = Usuario::where('id',Auth::id())->get();
             foreach ($Usuario as $rec){            
                 foreach ($rec->Detalles as $Rts){
@@ -68,29 +76,39 @@ class Pedido extends Model {
             $Condicionales[] = ['status', '=', $Estado];
         }
 
-        $query = Pedido::whereBetween('date_time', [$start, $end])->where($Condicionales)->whereIn('name',$Rutas)->get();
+        
 
- 
+        // withCount: el conteo de comentarios viene en la misma consulta (antes era 1 consulta por pedido).
+        $query = Pedido::whereBetween('date_time', [$start, $end])->where($Condicionales)->whereIn('name',$Rutas)->withCount('Comentarios')->get();
 
+        // Nombres de vendedor en una sola consulta (antes era 1 consulta por pedido).
+        $codigosVendedor = $query->map(function ($fila) {
+            return substr($fila["name"], 0, 3);
+        })->unique()->values()->all();
+        $NombresVendedor = $codigosVendedor
+            ? Vendedor::whereIn('VENDEDOR', $codigosVendedor)->pluck('NOMBRE', 'VENDEDOR')
+            : collect();
 
         $i = 0;
         $json = array();
         foreach ($query as $fila) {
+
+            $CodeRuta = substr($fila["name"], 0, 3);
+
             $json[$i]["id"]             = $fila["id"];
             $json[$i]["code"]           = $fila["code"];
             $json[$i]["CLIENTE"]        = $fila["email"];
             $json[$i]["DESCRIPCION"]    = $fila["phone"];
             $json[$i]["DIRECCION"]      = $fila["address"];
-
             $json[$i]["RUTA"]           = $fila["name"];
-            $json[$i]["VENDEDOR"]       = Vendedor::where('VENDEDOR',$fila["name"])->get()->pluck('NOMBRE')[0];            
+            $json[$i]["VENDEDOR"]       = $NombresVendedor[$CodeRuta] ?? 'N/D';
             $json[$i]["FECHA"]          = date('M d, Y h:i A', strtotime($fila["created_at"])) ;
             $json[$i]["ARTICULOS"]      = $fila["order_list"];
             $json[$i]["MONTO"]          = $fila["order_total"];
             $json[$i]["COMMENT"]        = $fila["comment"];
             $json[$i]["ESTADO"]         = $Estados[$fila["status"]];
             $json[$i]["COLOR"]          = $ColorSt[$fila["status"]];
-            $json[$i]["CountsComments"]          = $fila->CountsComments();
+            $json[$i]["CountsComments"]          = $fila->comentarios_count;
 
             
             $i++;
@@ -107,6 +125,7 @@ class Pedido extends Model {
 
                 $response =   Pedido::where('id',  $id)->update([
                     "status" => $Valor,
+                    "updated_by" => Auth::user()->id,
                 ]);
 
                 //Pedido::SendNotifications($request);

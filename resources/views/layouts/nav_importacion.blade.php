@@ -1,90 +1,37 @@
+{{-- Barra superior (nueva UI). Se mantiene el nombre del parcial porque todas las vistas lo incluyen. --}}
+<header class="sac-top">
+  @if ((string) Session::get('rol') !== '12')
+  <button class="sac-ib" type="button" aria-label="Ocultar o mostrar menú lateral" title="Ocultar/mostrar menú (Ctrl+B)" aria-controls="sacSide" aria-expanded="true" data-sac-toggle>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"></rect><path d="M9 3v18"></path></svg>
+  </button>
+  @endif
 
-<nav class="navbar navbar-light navbar-glass navbar-top navbar-expand">
+  <img class="sac-top-logo" src="{{ asset('images/logo-20-iso.png') }}" alt="Unimark 20 años" width="36" height="36">
+  <div class="sac-top-title">Unimark S.A. · <strong id="sacTopTitle">@yield('sac_title', 'SAC')</strong></div>
 
-
-<a class="navbar-brand me-1 me-sm-3" href="{{ url('/') }}">
-  <div class="row gx-0 align-items-center">
-    <h6 class="text-primary fs--1 mb-0">Bienvenido a </h6>
-    <h4 class="text-primary fw-bold mb-0">UNIMARK <span class="text-info fw-medium">S,A</span></h4>
-  </div>
-</a>
-
-<ul class="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center ">
-  <li class="nav-item">
-    <div class="theme-control-toggle fa-icon-wait px-2">
-      <input class="form-check-input ms-0 theme-control-toggle-input" id="themeControlToggle" type="checkbox" data-theme-control="theme" value="dark" />
-      <label class="mb-0 theme-control-toggle-label theme-control-toggle-light" for="themeControlToggle" data-bs-toggle="tooltip" data-bs-placement="left" title="Cambiar a tema claro"><span class="fas fa-sun fs-0"></span></label>
-      <label class="mb-0 theme-control-toggle-label theme-control-toggle-dark" for="themeControlToggle" data-bs-toggle="tooltip" data-bs-placement="left" title="Cambiar a tema oscuro"><span class="fas fa-moon fs-0"></span></label>
-    </div>
-  </li>
-  <li class="nav-item dropdown" style="display:none">
-    <a class="nav-link notification-indicator notification-indicator-primary px-0 fa-icon-wait" id="navbarDropdownNotification" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span class="fas fa-bell" data-fa-transform="shrink-6" style="font-size: 33px;"></span></a>
-    <div class="dropdown-menu dropdown-menu-end dropdown-menu-card dropdown-menu-notification" aria-labelledby="navbarDropdownNotification">
-      <div class="card card-notification shadow-none">
-        <div class="card-header">
-          <div class="row justify-content-between align-items-center">
-            <div class="col-auto">
-              <h6 class="card-header-title mb-0">Notificaciones</h6>
-            </div>
-          </div>
-        </div>
-        <div class="scrollbar-overlay" style="max-height:19rem">
-          <div class="list-group list-group-flush fw-normal fs--1">          
-
-            <div class="list-group-item">
-              <a class="notification notification-flush notification-unread" href="#!">
-                <div class="notification-avatar">
-                  <div class="avatar avatar-2xl me-3">
-                    <img class="rounded-circle" src="{{ asset('images/user/avatar-4.jpg') }}" alt="" />
-
-                  </div>
-                </div>
-                <div class="notification-body">
-                  <p class="mb-1"><strong>Usuario</strong> Actualizo el Contendido de : NOMBRE DEL PRODUCOT y del CAMPO</p>
-                    <span class="notification-time"><span class="me-2" role="img" aria-label="Emoji">💬</span>Just now</span>
-                </div>
-              </a>
-            </div>
-          </div>
-        </div>
-        <div class="card-footer text-center border-top"><a class="card-link d-block" href="../../../app/social/notifications.html">Ver Todas</a></div>
-      </div>
-    </div>
-
-  </li>
-  <li class="nav-item dropdown"><a class="nav-link pe-0" id="navbarDropdownUser" href="#" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-      
-    <div class="d-flex align-items-center position-relative">
-      <div class="flex-1">
-        <h6 class="mb-0 fw-semi-bold"><div class="stretched-link text-900">{{Session::get('name_session')}}</div></h6>
-        <p class="text-500 fs--2 mb-0">{{ Session::get('Rutas') }}</p>
-      </div>
-      <div class="avatar avatar-xl ms-3">
-        <img class="rounded-circle" src="{{ asset('images/user/avatar-4.jpg') }}"   />
-      </div>
-    </div>
-
-
-    
-
-      
-    </a>
-    <div class="dropdown-menu dropdown-menu-end py-0" aria-labelledby="navbarDropdownUser">
-      <div class="bg-white dark__bg-1000 rounded-2 py-2"> 
+  <div class="ms-auto d-flex align-items-center gap-2">
+    <button class="sac-ib" type="button" data-sac-theme-toggle aria-pressed="false" aria-label="Cambiar a modo oscuro" title="Modo oscuro">
+      <svg class="sac-ico-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path></svg>
+      <svg class="sac-ico-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2m-7.07-14.07 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"></path></svg>
+    </button>
+    <div class="dropdown">
+      <button class="btn d-flex align-items-center gap-2" id="navbarDropdownUser" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="border: 1px solid var(--sac-input-border); background: var(--sac-surface); color: var(--sac-ink)">
+        <span class="text-start lh-sm d-none d-sm-block">
+          <span class="d-block fw-semi-bold" style="font-size: 13px">{{ Session::get('name_session') }}</span>
+          <span class="d-block" style="font-size: 12px; color: var(--sac-muted)">{{ Session::get('Rutas') }}</span>
+        </span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+      </button>
+      <div class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownUser">
         @if( Session::get('rol') == '1' || Session::get('rol') == '2')
-          <a class="dropdown-item fw-bold text-warning" href="{{ route('ArticuloFavorito') }}"><span class="fas fa-crown me-1"></span><span>Art. Favs.</span></a>
-          <a class="dropdown-item" href="{{ route('CalendarPromocion') }}"><span class="fas fa-calendar"></span><span> Promociones</span></a>
-          <a class="dropdown-item" href="{{ route('Usuarios') }}"> <span class="fas fa-user-tie me-1"></span>Usuario </a>
-          <div class="dropdown-divider"></div>
-          <a class="dropdown-item" href="{{ route('monitoring') }}"> <span class="fas fa-chalkboard-teacher me-1"></span>Monitoreo</a>
+          <a class="dropdown-item" href="{{ route('ArticuloFavorito') }}">Art. favoritos</a>
+          <!-- <a class="dropdown-item" href="{{ route('CalendarPromocion') }}">Calendario de promociones</a> -->
+          <a class="dropdown-item" href="{{ route('Usuarios') }}">Usuarios</a>
+          <a class="dropdown-item" href="{{ route('monitoring') }}">Monitoreo</a>
           <div class="dropdown-divider"></div>
         @endif
-        
-        
-        <a class="dropdown-item" href="{{ route('logout') }}" >Salir</a>
-        
+        <a class="dropdown-item" href="{{ route('logout') }}">Cerrar sesión</a>
       </div>
     </div>
-  </li>
-</ul>
-</nav>
+  </div>
+</header>

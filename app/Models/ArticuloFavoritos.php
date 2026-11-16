@@ -26,9 +26,12 @@ class ArticuloFavoritos extends Model {
 
                     $Obj = new ArticuloFavoritos();
                     $Obj->Articulo    = $Articulo;      
-                    $response = $Obj->save(); 
-                    
+                    $response = $Obj->save();
+
                 }
+
+                // Inventario lee los favoritos de caché (5 min): se limpia para que el cambio se vea al instante.
+                cache()->forget('ArticuloFavoritos');
 
                 return response()->json($response);
 

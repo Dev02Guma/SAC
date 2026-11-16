@@ -4,6 +4,7 @@
         {"title": "FACTURAS","data": "FACTURAS"},
         {"title": "FECHA","data": "FCT_DATE"},
         {"title": "RUTA","data": "FCT_RUTA"},
+        {"title": "CLIENTE","data": "FCT_CLIE"},
         {"title": "NOMBRE","data": "FCT_NAME"},
         {"title": "ARTICULO","data": "FCT_ARTI"},
         {"title": "DESCRIPCION","data": "FCT_DESC"},
@@ -13,50 +14,42 @@
 
     setTables()
     function setTables(){
-        initTable('#tbl_facturas',[],tbl_header_inventarios_Fav);
-        $("#tbl_facturas_length").hide();
-        $("#tbl_facturas_filter").hide();
+        initTable([]);
+        
         $("#id_loading").hide();
     }
-
-
-
-    $('#tbl_buscar_tbl_facturas').on('keyup', function() {        
-        var vTableFavorito = $('#tbl_facturas').DataTable();
-        vTableFavorito.search(this.value).draw();
-    });
-
     
 
 
-    function initTable(id,datos,Header){
-        $(id).DataTable({
-            "data": datos,
-            "destroy": true,
-            "responsive": true, 
-            "info": false,
-            "bPaginate": true,
-            "order": [
-                [0, "asc"]
-            ],
-            "lengthMenu": [
-                [100, -1],
-                [100, "Todo"]
-            ],
-            "language": {
-                "zeroRecords": "NO HAY COINCIDENCIAS",
-                "paginate": {
-                    "first": "Primera",
-                    "last": "Última ",
-                    "next": "Siguiente",
-                    "previous": "Anterior"
-                },
-                "lengthMenu": "MOSTRAR _MENU_",
-                "emptyTable": "-",
-                "search": "BUSCAR"
-            },
-            'columns': Header,
-        });
+    function initTable(d){
+        var rows_table = '';
+
+
+        if(d.length == 0 ){
+            rows_table += `<tr class="border-200">
+                            <td colspan="3" class="align-middle text-center">
+                                <h6 class="mb-0 text-nowrap">No se encontraron resultados</h6>
+                            </td>
+                        </tr>`;
+        }else{
+            $("#tbl_facturas_decolucion tbody").html(rows_table);
+
+            d.forEach(function(item, index) {
+                
+                rows_table += `<tr class="border-200" ` + item.FCT_BONI + ` >
+                                <td class="align-middle">
+                                    <h6 class="mb-0 text-nowrap"> ` + item.FCT_DESC + `</h6>
+                                    <p class="mb-0">` + item.FCT_ARTI + `</p>
+                                </td>
+                                <td class="align-middle text-center">` + item.FCT_CANT + `</td>
+                                <td class="align-middle text-end">` + item.FCT_LOTE + `</td>
+                            </tr>`;
+            });
+        }
+        $("#tbl_facturas_decolucion tbody").html(rows_table);
+        
+
+
     }
 
     
@@ -79,9 +72,23 @@
                 async: true,
                 success: function(data) {
 
-                    initTable('#tbl_facturas',data,tbl_header_inventarios_Fav);
-                    $("#tbl_facturas_length").hide();
-                    $("#tbl_facturas_filter").hide();
+                    console.log(data)
+
+                    let fact_client = data[0].FACTURAS
+                    let date_client = data[0].FCT_DATE 
+
+                    let name_client = data[0].FCT_NAME
+                    let code_client = data[0].FCT_CLIE 
+                    let ruta_client = data[0].FCT_RUTA                     
+
+                    
+                    $("#lbl_factura").html(fact_client);
+                    $("#lbl_fecha_factura").html(date_client);
+                    $("#lbl_nombre_cliente").html(code_client + ' - ' + name_client);
+                    $("#lbl_ruta").html(ruta_client);
+
+                    initTable(data);
+                
                     $("#id_loading").hide();
                 },
                 error: function(response) {

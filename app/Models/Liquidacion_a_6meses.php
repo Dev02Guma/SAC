@@ -51,7 +51,7 @@ class Liquidacion_a_6meses extends Model
                     break;
                 }
             }
-            $json[$i]['IMG_URL'] = Storage::Disk('s3')->temporaryUrl('product/'.$img, now()->addMinutes(5));
+            $json[$i]['IMG_URL'] = Storage::Disk('s3')->temporaryUrl('product/'.$img, now()->addHours(12));
            $i++;
         }
         return $json;

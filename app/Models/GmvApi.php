@@ -15,6 +15,7 @@ use Exception;
 
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Storage;
+use App\Services\OneSignalService;
 
 class GmvApi extends Model
 {  
@@ -476,77 +477,13 @@ class GmvApi extends Model
                 $array[$i]['mId']               = $row->id;
                 $array[$i]['mRecibo']           = $row->id_recibo;
                 $array[$i]['mNombreImagen']     = $row->Nombre_imagen;
-                $array[$i]['imagen_url']        = Storage::Disk('s3')->temporaryUrl('Adjuntos-Recibos/'.$row->Nombre_imagen, now()->addMinutes(5));
+                $array[$i]['imagen_url']        = Storage::Disk('s3_tmp')->temporaryUrl('Adjuntos-Recibos/'.$row->Nombre_imagen, now()->addMinutes(5));
                 $i++;
             }
         }
 
         return $array;
     }
-
-    
-
-    public static function Promociones(Request $request){
-        $Array = array();
-
-        $Promociones = Promocion::where('activo','S')->get();
-
-        foreach ($Promociones as $Key => $value) {
-            
-            $Imagen = "" ;
-
-            if ($value->articulo === 0 ) {
-                $Imagen = Storage::temporaryUrl('Promociones/'.$value->image, now()->addMinutes(5));
-            } else {
-                $NameFile = Productos::where('product_sku', $value->articulo)->pluck('product_image');
-
-
-
-                $Imagen = ($NameFile->count() > 0 ) ? "https://apps.gumacorp.com/gmv3/upload/product/" . $NameFile[0] : Storage::temporaryUrl('Promociones/'.$value->image, now()->addMinutes(5)) ;
-            
-            }
-            
-
-            $Array[$Key] = [
-                'articulo' => $value->articulo,
-                'titulo' => $value->titulo,
-                'descripcion' => $value->descripcion,
-                'fechaInicio' => $value->fechaInicio,
-                'fechaFinal' => $value->fechaFinal,
-                'Imagen' => $Imagen,
-            ];
-        }
-
-        return $Array;
-    }
-
-    public static function CronCheckPromo(){
-        $Array = array();
-
-        //ACTUALIZAR VIGENCIAS DE LISTA DE PRECIOS CUSTOMIZADAS
-        DB::connection('sqlsrv')->select("EXEC PRODUCCION.dbo.UPDATE_NIVEL_PRECIO");
-
-        $Promociones = Promocion::where('activo', 'S')->whereDate('fechaFinal', '<', now()->toDateString())->get();
-
-        foreach ($Promociones as $Key => $value) {
-            
-            $value->activo = 'N';
-            $value->save();
-            
-            $Array[$Key] = [
-                'articulo' => $value->articulo,
-                'titulo' => $value->titulo,
-                'descripcion' => $value->descripcion,
-                'fechaInicio' => $value->fechaInicio,
-                'fechaFinal' => $value->fechaFinal,
-            ];
-            
-        }
-        return COUNT($Array);
-    }
-
-
-
 
     public static function get_help(){
         $response = DB::connection('mysql_pedido')->table('tbl_help')->get();
@@ -598,16 +535,23 @@ class GmvApi extends Model
         $orderBy = strtolower($OrderBy);
         $i = 0;
         $json = array();
-
-        $response = DB::connection('mysql_gumanet')->table('tbl_comentarios')->where('Autor', $Ruta)->orderBy('Fecha', $orderBy)->get();
+        
+        $response = gnetInteligenciaMercado::where('Autor', $Ruta)->orderBy('Fecha', $orderBy)->get();
 
         if(count($response) >= 1){
             foreach($response as $row){
-                $json[$i]['Titulo']    = $row->Titulo;
-                $json[$i]['Contenido'] = $row->Contenido;
-                $json[$i]['Fecha']     = $row->Fecha;
-                $json[$i]['Autor']     = $row->Autor;
-                $json[$i]['Imagen']    = Storage::temporaryUrl('news/'.$row->Imagen, now()->addMinutes(5));;
+                
+                $ImgUrl = ($row->Imagen === "") ? 'ND' : Storage::temporaryUrl('news/'.$row->Imagen , now()->addMinutes(5));
+
+                $json[$i] = [
+                    'IdPost'    => $row->id,
+                    'Titulo'    => $row->Titulo,
+                    'Contenido' => $row->Contenido,
+                    'Fecha'     => $row->Fecha,
+                    'Autor'     => $row->Autor,
+                    'Imagen'    => $ImgUrl,
+                    'Count'     => $row->getComentarios()->count() . ' Comentarios.'
+                ];
                 $i++;
             }
         }
@@ -1015,6 +959,7 @@ class GmvApi extends Model
             $NamRuta        = $request->input('sndNombre');
             $Comentario     = $request->input('snd_comentario');
             $imagektp       = $request->input('snd_image');
+            $IdOneSignal    = $request->input('IdOneSignal');
             $Empresa        = '1';
             $Read           = '0';
             $Updated_at     = date('Y-m-d H:i:s');
@@ -1027,9 +972,18 @@ class GmvApi extends Model
                 Storage::disk('s3')->put('news/'.$nama_imagen, base64_decode($imagektp));  
             }
 
-            $query = "INSERT INTO tbl_comentarios (Titulo,Contenido, Autor, Nombre,Fecha,Imagen,empresa,`Read`,updated_at) VALUES ('$Nombre','$Comentario', '$CodRuta', '$NamRuta','$Fecha','$nama_imagen','$Empresa','$Read','$Updated_at')";
-            $response = DB::connection('mysql_gumanet')->select($query);
-            //$response = DB::insert($query);
+            $response = gnetInteligenciaMercado::insert([
+                'Titulo' => $Nombre,
+                'Contenido' => $Comentario,
+                'Autor' => $CodRuta,
+                'Nombre' => $NamRuta,
+                'Fecha' => $Fecha,
+                'Imagen' => $nama_imagen,
+                'empresa' => $Empresa,
+                'Read' => $Read,
+                'updated_at' => $Updated_at,
+                'IdOneSignal' => $IdOneSignal
+            ]);
 
             if($response){
                 return array('Success'=>'Data Inserted Successfully');
@@ -1042,6 +996,90 @@ class GmvApi extends Model
             return response()->json($mensaje);
         }
     }
+    public static function post_add_comments_im(Request $request){
+        try{
+            $IdPost          = $request->input('IdPost');
+            $Comment         = $request->input('Comment');
+            $CeatedBy        = $request->input('CeatedBy');
+            $IdOneSignal     = $request->input('IdOneSignal');       
+            $UpdatedAt       = date('Y-m-d H:i:s');
+        
+            $response = gnetInteligenciaComment::insert([
+                'id_post'    => $IdPost,
+                'comments'   => $Comment,
+                'created_by' => $CeatedBy,
+                'created_at' => $UpdatedAt,
+                'IdOneSignal' => $IdOneSignal
+            ]);
+
+            if($response){
+                return array('Success'=>'Data Inserted Successfully');
+            }else {
+                return array('Error'=>'Try Again');
+            }
+
+        }catch (Exception $e) {
+            $mensaje =  'Excepción capturada: ' . $e->getMessage() . "\n";
+            return response()->json($mensaje);
+        }
+    }
+    public static function post_remove_post_im(Request $request){
+        try{
+            $IdPost          = $request->input('IdPost');
+        
+            $rpPost     = gnetInteligenciaMercado::where('id', $IdPost)->delete();
+            $rpCommebts = gnetInteligenciaComment::where('id_post', $IdPost)->delete();
+
+            if($rpCommebts){
+                return array('Success'=>'Post Removed Successfully');
+            }else {
+                return array('Error'=>'Try Again');
+            }
+
+        }catch (Exception $e) {
+            $mensaje =  'Excepción capturada: ' . $e->getMessage() . "\n";
+            return response()->json($mensaje);
+        }        
+        
+    }
+
+    public static function remove_comments(Request $request){
+        try{
+            $IdComment          = $request->input('comment_id');
+        
+            $rpComments = gnetInteligenciaComment::where('id_comments', $IdComment)->delete();
+
+            if($rpComments){
+                return array('Success'=>'Comment Removed Successfully');
+            }else {
+                return array('Error'=>'Try Again');
+            }
+
+        }catch (Exception $e) {
+            $mensaje =  'Excepción capturada: ' . $e->getMessage() . "\n";
+            return response()->json($mensaje);
+        }        
+        
+    }
+
+    /**
+     * Envía una notificación push a un usuario específico.
+     *
+     * @param  string  $userId   ID del usuario (external_user_id o player_id)
+     * @param  string  $title    Título de la notificación
+     * @param  string  $message  Cuerpo del mensaje
+     * @param  array   $data     Datos adicionales (opcional)
+     * @return array   Respuesta de OneSignal
+     */
+    public static function sendNotification($userId, $title, $message, $data = [])
+    {
+        $oneSignal = app(OneSignalService::class);
+
+        return $oneSignal->sendToUser($userId, $title, $message, $data);
+    }
+
+
+    
 
     public static function post_update_datos(Request $request){
         $KeysSecret 	= "A7M";
@@ -1696,6 +1734,46 @@ class GmvApi extends Model
 
         return count($IDs_Pedidos);
 
+    }
+
+    public static function Promociones(Request $request){
+        $Array = array();
+        
+        $Promociones = Promocion::where('activo','S')->get();
+
+        $Array[0] = [
+            'articulo'      => 0,
+            'titulo'        => "",
+            'descripcion'   => "",
+            'fechaInicio'   => "",
+            'fechaFinal'    => "",
+            'Imagen'        => "",
+        ];
+
+        foreach ($Promociones as $Key => $value) {
+            
+            $Imagen = "" ;
+            if ($value->articulo === 0 ) {
+                $Imagen = Storage::temporaryUrl('Promociones/'.$value->image, now()->addMinutes(5));
+            } else {
+                $NameFile = Productos::where('product_sku', $value->articulo)->pluck('product_image');
+                $Imagen = ($NameFile->count() > 0 ) ? "https://apps.gumacorp.com/gmv3/upload/product/" . $NameFile[0] : Storage::temporaryUrl('Promociones/'.$value->image, now()->addMinutes(5)) ;
+            
+            }
+            
+            $Array[$Key] = [
+                'articulo' => $value->articulo,
+                'titulo' => $value->titulo,
+                'descripcion' => $value->descripcion,
+                'fechaInicio' => $value->fechaInicio,
+                'fechaFinal' => $value->fechaFinal,
+                'Imagen' => $Imagen,
+            ];
+        }
+
+        
+        
+        return $Array;
     }
 
 }

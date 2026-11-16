@@ -28,18 +28,26 @@ class Visita extends Model {
                 $Descrip    = $request->input('Descrip');
                 $Ruta       = $request->input('Ruta');
 
-                $iCliente   = ClientesFull::where('CLIENTE',$Cliente)->first();
+                $iCliente   = ClientesFull::where('CLIENTE',$Cliente)->first();          
 
-                $obj = new Visita();   
-                $obj->cliente       = $Cliente;   
-                $obj->ruta          = $Ruta;
-                $obj->nombre        = $iCliente->NOMBRE;                
-                $obj->fechavisita   = $FechaVi;
-                $obj->descripcion   = $Descrip;
-                $obj->activo        = 'S';                 
-                $response = $obj->save();
+                $checkVisit = Visita::where('cliente', $Cliente)->where('fechaVisita', 'LIKE', '%'.date('Y-m-d',strtotime($FechaVi)).'%')->first();
 
-                return $response;
+                if($checkVisit == null){
+                   
+                    $obj = new Visita();   
+                    $obj->cliente       = $Cliente;   
+                    $obj->ruta          = $Ruta;
+                    $obj->nombre        = $iCliente->NOMBRE;                
+                    $obj->fechavisita   = $FechaVi;
+                    $obj->descripcion   = $Descrip;
+                    $obj->activo        = 'S';                 
+                    $response = $obj->save();
+
+                    return $response;
+                }else{
+                    return false;
+                }
+                
                 
             } catch (Exception $e) {
                 $mensaje =  'Excepción capturada: ' . $e->getMessage() . "\n";

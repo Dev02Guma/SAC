@@ -20,12 +20,14 @@ use App\Models\Factura;
 use App\Models\Estadisticas;
 use App\Models\ClientesFull;
 use App\Models\Comision;
+use App\Models\Cuarentena;
 use App\Models\PlanCrecimiento;
 use App\Models\Promocion;
 use App\Models\Logs;
 use Illuminate\Support\Str;
 Use UxWeb\SweetAlert\SweetAlert;
 use Exception;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Psy\Readline\Hoa\Console;
@@ -61,7 +63,26 @@ class HomeController extends Controller {
         }
         
         $promocion = Promocion::orderBy('fechaInicio')->where('Activo','S')->get();
-        return view('Principal.Home', compact('Lista_SAC','SAC','Normal', 'promocion'));
+
+        // Datos del artículo de cada promoción (laboratorio, unidad y regla de bonificación) para las tarjetas
+        $artPromo = collect();
+        try {
+            $codigos = $promocion->pluck('articulo')->filter()->unique()->values()->all();
+            if (count($codigos)) {
+                $artPromo = Inventario::select('ARTICULO', 'LABORATORIO', 'UNIDAD_ALMACEN', 'REGLAS')
+                    ->whereIn('ARTICULO', $codigos)->get()->keyBy('ARTICULO');
+            }
+        } catch (\Throwable $e) {
+            $artPromo = collect();
+        }
+
+        // Artículos para el modal "Nueva promoción" (solo roles que administran promociones)
+        $articulos = collect();
+        if (Session::get('rol') == '1' || Session::get('rol') == '2') {
+            $articulos = Inventario::select('ARTICULO', 'DESCRIPCION')->orderBy('DESCRIPCION')->get();
+        }
+
+        return view('Principal.Home', compact('Lista_SAC','SAC','Normal', 'promocion', 'articulos', 'artPromo'));
         
     }
     public function getEstadistiacas()
@@ -173,6 +194,8 @@ class HomeController extends Controller {
 
         $Lista_articulos_Favoritos = ArticuloFavoritos::all();
         $getListaNegra = DB::connection('sqlsrv')->select('SELECT * FROM PRODUCCION.dbo.tbl_articulos_lista_negra');
+        $getRifas = DB::connection('sqlsrv')->select('SELECT * FROM PRODUCCION.dbo.view_sac_rifa_num_cliente WHERE CLIENTE = '.$idCliente);
+        $getNumRifas = !empty($getRifas) ? $getRifas[0]->TOTAL_ACCIONES : 0;
 
         foreach ($Lista_articulos_Favoritos as $rec){
             $articulos_favoritos[] = $rec->Articulo;
@@ -190,15 +213,47 @@ class HomeController extends Controller {
             'ClientesHistoricoFactura'      => ClientesHistoricoFactura::where('COD_CLIENTE', $idCliente)->orderBy('Dia', 'DESC')->get(),            
             'ArticulosNoFacturado'          => Inventario::whereNotIn('ARTICULO', function($q)  use ($idCliente){
                                                     $q->select('ARTICULO')->from('PRODUCCION.dbo.GMV3_hstCompra_3M')->where("CLIENTE", $idCliente);
-                                                })->whereIn('ARTICULO',$articulos_favoritos)->whereNotIn('ARTICULO', $lista_negra)->get(),            
+                                                })->whereIn('ARTICULO',$articulos_favoritos)->whereNotIn('ARTICULO', $lista_negra)->get(),
+            'Acciones'                      => $getNumRifas,
         );
 
         return response()->json($dtaCliente);
     }
+    /**
+     * Productos facturados a un cliente en un rango de fechas (líneas de cada factura).
+     * Parámetros: ?desde=AAAA-MM-DD&hasta=AAAA-MM-DD (por defecto, los últimos 90 días).
+     */
+    public function getProductosFacturados(Request $request, $idCliente)
+    {
+        $fecha = function ($v, $defecto) {
+            $d = \DateTime::createFromFormat('!Y-m-d', (string) $v);
+            return ($d && $d->format('Y-m-d') === $v) ? $d : $defecto;
+        };
+        $hasta = $fecha($request->query('hasta'), new \DateTime('today'));
+        $desde = $fecha($request->query('desde'), (clone $hasta)->modify('-90 days'));
+        if ($desde > $hasta) { [$desde, $hasta] = [$hasta, $desde]; }
+        $finExclusivo = (clone $hasta)->modify('+1 day');
+
+        $filas = DB::connection('sqlsrv')->select(
+            "SELECT TOP 5000 H.FACTURA, CONVERT(varchar(10), H.Dia, 23) AS FECHA,
+                    D.ARTICULO, D.DESCRIPCION, D.CANTIDAD, D.PRECIO_UNITARIO, D.PRECIO_TOTAL
+               FROM PRODUCCION.dbo.iweb4_historico_factura H
+               INNER JOIN PRODUCCION.dbo.UMK_DETALLES_FACTURAS D ON D.FACTURA = H.FACTURA
+              WHERE H.COD_CLIENTE = ? AND H.Dia >= ? AND H.Dia < ?
+              ORDER BY H.Dia DESC, H.FACTURA DESC, D.LINEA",
+            [(string) $idCliente, $desde->format('Y-m-d'), $finExclusivo->format('Y-m-d')]
+        );
+
+        return response()->json([
+            'desde' => $desde->format('Y-m-d'),
+            'hasta' => $hasta->format('Y-m-d'),
+            'filas' => $filas,
+        ]);
+    }
     public function getDataArticulo($idArticulo)
     {
         $dtaArticulo[] = array(
-            'InfoArticulo'          => Inventario::where('ARTICULO', $idArticulo)->get(),
+            'InfoArticulo'          => Inventario::with('cuarentena')->where('ARTICULO', $idArticulo)->get(),
             'NivelPrecio'           => NivelPrecio::getNivelPrecio($idArticulo),
             'Bodega'                => Bodega::getBodega($idArticulo),
         );
@@ -491,4 +546,32 @@ class HomeController extends Controller {
         $result = Inventario::imgArticulo($request);
         return $result;
     }
+
+    public function insertCuarentena(Request $request){
+        try{
+            $articulo = $request->input('Articulo');
+            $op = $request->input('Opcion');
+            $id_user = Auth::id();
+            if($op == 1){
+                $created_at = today();
+
+                $cuarentena = new Cuarentena();
+
+                $cuarentena->ARTICULO = $articulo;
+                $cuarentena->created_at = $created_at;
+                $cuarentena->id_user = $id_user;
+                
+                $response = $cuarentena->save();
+            }else{
+                $response = Cuarentena::where('ARTICULO', $articulo)->delete();
+            }
+
+            return $id_user;
+        }catch (Exception $e) {
+            $mensaje =  'Excepción capturada: ' . $e->getMessage() . "\n";
+            alert()->error($mensaje, 'ERROR')->persistent('Close');
+            return redirect()->back();
+        }
+    }
+
 }

@@ -17,7 +17,7 @@ class Vendedor extends Model
 
     public static function getVendedor()
     {  
-        return Vendedor::whereNotIn('VENDEDOR',['F01','F12','F02',"F15","F23","F22"])->get();
+        return Vendedor::whereNotIn('VENDEDOR',['F01','F12','F02',"F15","F23"])->get();
         //return Vendedor::whereIn('VENDEDOR',['F05'])->get();
     }
 
@@ -42,47 +42,6 @@ class Vendedor extends Model
     $vendedores = Vendedor::whereIn('VENDEDOR', $Rutas)->get();
 
     return $vendedores;
-    }
-
-    public static function UpdateVendedores() {
-        $Vendedor = Vendedor::all();
-
-        $Array_rutas_gmv     = [] ;
-        $Array_rutas_gnet    = [] ;
-
-        foreach ($Vendedor as $k => $v) {
-        
-            $Array_rutas_gmv[$k] = [
-                'username'     => $v->VENDEDOR,
-                'Name'         => $v->NOMBRE,
-            ];
-
-            $Array_rutas_gnet[$k] = [
-                'vendedor'     => $v->VENDEDOR,
-                'nombre'       => $v->NOMBRE,
-            ];
-
-            $Array_rutas_sac[$k] = [
-                'username'     => $v->VENDEDOR,
-                'nombre'       => $v->NOMBRE,
-            ];
-
-
-        }
-        $userInstance = new UsuarioVendedor;
-        \Batch::update($userInstance, $Array_rutas_gmv, 'username');
-
-        $userInstanceGNET = new UserGNET;
-        \Batch::update($userInstanceGNET, $Array_rutas_gnet, 'vendedor');
-
-        $userInstanceSAC = new Usuario;
-        \Batch::update($userInstanceSAC, $Array_rutas_sac, 'username');
-
-
-        $array_merge = array_merge($Array_rutas_gmv,$Array_rutas_gnet);
-        return $array_merge;
-
-
     }
 
 }

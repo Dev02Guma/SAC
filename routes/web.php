@@ -23,7 +23,6 @@ Route::post('/update_promocion', 'HomeController@update_promocion')->name('updat
 Route::get('dtaEstadisticas', 'HomeController@dtaEstadisticas')->name('dtaEstadisticas');
 
 
-
 Route::get('getMiProgreso/{d1}/{d2}', 'HomeController@getMiProgreso')->name('getMiProgreso/{d1}/{d2}');
 Route::get('getArticulosFavoritos', 'HomeController@getArticulosFavoritos')->name('getArticulosFavoritos');
 Route::get('getDataArticulo/{ID}', 'HomeController@getDataArticulo')->name('getDataArticulo');
@@ -33,6 +32,7 @@ Route::get('getDetallesFactura/{ID}', 'HomeController@getDetallesFactura')->name
 
 Route::get('getDataCliente', 'HomeController@getDataCliente')->name('getDataCliente');
 Route::get('getDataCliente/{ID}', 'HomeController@getDataCliente')->name('getDataCliente');
+Route::get('getProductosFacturados/{ID}', 'HomeController@getProductosFacturados')->name('getProductosFacturados');
 Route::get('Comiciones', 'HomeController@Comiciones')->name('Comiciones');
 
 Route::get('Usuarios', 'UsuarioController@getUsuarios')->name('Usuarios');
@@ -70,7 +70,7 @@ Route::post('imgArticulo', 'HomeController@imgArticulo')->name('imgArticulo');
 Route::get('getDataVisita/{RUTA}/', 'ScheduleController@getDataVisita')->name('getDataVisita/{RUTA}/');
 Route::post('UpdateVisita', 'ScheduleController@UpdateVisita')->name('UpdateVisita');
 Route::get('Schedule', 'ScheduleController@getSchedule')->name('Schedule');
-Route::post('AddVisita', 'ScheduleController@AddVisita')->name('AddVisita');
+Route::Post('AddVisita', 'ScheduleController@AddVisita')->name('AddVisita');
 Route::post('CheckVisita', 'ScheduleController@CheckVisita')->name('CheckVisita');
 
 Route::get('rmVisita/{RUTA}', 'ScheduleController@rmVisita')->name('rmVisita/{RUTA}');
@@ -79,3 +79,12 @@ Route::get('rmVisita/{RUTA}', 'ScheduleController@rmVisita')->name('rmVisita/{RU
 Route::get('Devoluciones', 'DevolucionesController@getDevoluciones')->name('Devoluciones');
 Route::post('getDevoluciones', 'DevolucionesController@getData')->name('getDevoluciones');
 Route::post('reutilizar', 'ScheduleController@reutilizar')->name('reutilizar');
+
+Route::post('insertCuarentena', 'HomeController@insertCuarentena')->name('insertCuarentena');
+
+Route::get('Controlados', 'ControladosController@getControlados')->name('Controlados');
+Route::post('GetDataControlados', 'ControladosController@GetDataControlados')->name('GetDataControlados');
+Route::get('ControladosExport/{Desde}/{Hasta}', 'ControladosController@ControladosExport')->name('ControladosExport');
+
+
+

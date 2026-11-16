@@ -95,12 +95,12 @@ class Estadisticas extends Model
         SUM(T0.TOTAL_LINEA) as MesActual,
         ISNULL((SELECT  sum(T4.VentaNetaLocal) Venta FROM Softland.dbo.ANA_VentasTotales_MOD_Contabilidad_UMK T4  WHERE T4.Fecha_de_factura = '".$d2."' AND T4.VENDEDOR = T0.VENDEDOR    ), 0) AS DiaActual,	
         ISNULL((SELECT  sum(T4.VentaNetaLocal) Venta FROM Softland.dbo.ANA_VentasTotales_MOD_Contabilidad_UMK T4  WHERE (DATEPART(week,T4.Fecha_de_factura)-1) = '".$w."' AND DATEPART(YY,T4.Fecha_de_factura) = '".$y."'  AND T4.VENDEDOR = T0.VENDEDOR    ), 0) AS SaleWeek,	
-        ISNULL((SELECT COUNT(DISTINCT T1.ARTICULO) FROM PRODUCCION.dbo.view_master_pedidos_umk_v2 AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."' AND '".$d2."'AND T1.VENDEDOR = T0.VENDEDOR ), 0) AS SKU,	
-        ISNULL((SELECT SUM(T1.TOTAL_LINEA) AS NoV FROM PRODUCCION.dbo.view_master_pedidos_umk_v2 AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."'  AND '".$d2."' AND T1.VENDEDOR = T0.VENDEDOR and   T1.PEDIDO NOT LIKE 'PT%'  ), 0) AS EJEC,
-        ISNULL((SELECT SUM(T1.TOTAL_LINEA) AS NoV FROM PRODUCCION.dbo.view_master_pedidos_umk_v2 AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."'  AND '".$d2."' AND T1.VENDEDOR = T0.VENDEDOR and   T1.PEDIDO LIKE 'PT%'    ), 0) AS SAC
+        ISNULL((SELECT COUNT(DISTINCT T1.ARTICULO) FROM PRODUCCION.dbo.view_master_pedidos_with_cadena AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."' AND '".$d2."'AND T1.VENDEDOR = T0.VENDEDOR ), 0) AS SKU,	
+        ISNULL((SELECT SUM(T1.TOTAL_LINEA) AS NoV FROM PRODUCCION.dbo.view_master_pedidos_with_cadena AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."'  AND '".$d2."' AND T1.VENDEDOR = T0.VENDEDOR and   T1.PEDIDO NOT LIKE 'PT%'  ), 0) AS EJEC,
+        ISNULL((SELECT SUM(T1.TOTAL_LINEA) AS NoV FROM PRODUCCION.dbo.view_master_pedidos_with_cadena AS T1 WHERE T1.FECHA_PEDIDO BETWEEN '".$d1."'  AND '".$d2."' AND T1.VENDEDOR = T0.VENDEDOR and   T1.PEDIDO LIKE 'PT%'    ), 0) AS SAC
     
         FROM
-            PRODUCCION.dbo.view_master_pedidos_umk_v2 T0 	
+            PRODUCCION.dbo.view_master_pedidos_with_cadena T0 	
             
         WHERE
             T0.FECHA_PEDIDO BETWEEN '".$d1."' AND '".$d2."'  AND T0.VENDEDOR NOT IN ( 'F01', 'F12' ) ".$Rutas."
@@ -110,18 +110,18 @@ class Estadisticas extends Model
 
 
         $sql_skus = "SELECT 	( 
-        SELECT COUNT(DISTINCT T0.ARTICULO) FROM	PRODUCCION.dbo.view_master_pedidos_umk_v2 T0 
+        SELECT COUNT(DISTINCT T0.ARTICULO) FROM	PRODUCCION.dbo.view_master_pedidos_with_cadena T0 
         WHERE T0.FECHA_PEDIDO BETWEEN DATEADD( m, DATEDIFF( m, 0, '".$d1."' ), 0 ) AND dateadd( DD, - 1, CAST ( '".$d2."'AS DATE ) ) 
         AND T0.VENDEDOR NOT IN ( 'F01','F02', 'F04','F15','F12' ) 
         ) SKU_Farmacia,
         ( 
-            SELECT COUNT(DISTINCT T0.ARTICULO) FROM	PRODUCCION.dbo.view_master_pedidos_umk_v2 T0
+            SELECT COUNT(DISTINCT T0.ARTICULO) FROM	PRODUCCION.dbo.view_master_pedidos_with_cadena T0
             WHERE T0.FECHA_PEDIDO BETWEEN DATEADD( m, DATEDIFF( m, 0, '".$d1."' ), 0 ) AND dateadd( DD, - 1, CAST ( '".$d2."'AS DATE ) ) 
             AND T0.VENDEDOR IN ( 'F02', 'F04' ) 
         ) SKU_Proyect02,
         COUNT(DISTINCT T0.ARTICULO) SKU_TODOS
         FROM
-        PRODUCCION.dbo.view_master_pedidos_umk_v2 T0
+        PRODUCCION.dbo.view_master_pedidos_with_cadena T0
         WHERE
         T0.FECHA_PEDIDO BETWEEN '".$d1."' AND '".$d2."' AND T0.VENDEDOR NOT IN ( 'F01', 'F12' ) ";
             

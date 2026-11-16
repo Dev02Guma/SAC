@@ -47,6 +47,8 @@
                             location.reload();
                         }   
                     })
+                }else{
+                    Swal.fire('Visita repetida',"Ya tiene agendada una visita para este día",'warning');
                 }
             },
             error: function(response) {
